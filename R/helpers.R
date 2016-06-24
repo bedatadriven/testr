@@ -146,38 +146,34 @@ extract_func_name <- function(filename, modify.characters = TRUE){
 #' @param ... Functions either as character vectors, or package:::function expressions.
 #' @return List of parsed package and function names as characters.
 parseFunctionNames <- function(...) {
-    args <- as.list(substitute(list(...)))[-1]
-    i <- 1
+    args <- unlist( list(...) )
     result <- list()
-    result[length(args)] <- NULL
-    while (i <= length(args)) {
-        tryCatch({
-            x <- eval(as.name(paste("..",i,sep="")))
-            if (is.character(x)) {
-                # it is a character vector, use its value
-                x <- strsplit(x, ":::")[[1]]
+    result[ length(args) ] <- NULL
+    i <- 1
+    for (arg in args) {
+        if (is.character(arg)) {
+            # it is a character vector, use its value
+            x <- strsplit(arg, ":::")[[1]]
+            if (length(x) == 1 & nchar(x[1]) > 0) {
+                x <- strsplit(arg, "::")[[1]]
                 if (length(x) == 1) {
-                    x <- strsplit(x, "::")[[1]]
-                    if (length(x) == 1)
-                        x <- list(NA, x)
+                    x <- c(NA, x)
+                } else if (length(x) > 2) {
+                    warning( paste0("badly formatted package name: ", arg ) )
                 }
-                if (x[[2]] == "")
-                    x[[2]] <- ":::"
-                result[[i]] <- c(name = x[[2]], package = x[[1]])
+            } else if (length(x) == 1 & nchar(x[1]) == 0) {
+                x <- c(NA, ":::")
+            } else if (length(x) == 2 & nchar(x[1]) == 0) {
+                x <- c(NA, x[2])
+            } else if (length(x) == 2 & nchar(x[1]) > 0) {
+                x <- c(x[1], x[2])
             } else {
-                stop("Use substitured value")
+                warning( paste0("badly formatted package name: ", arg ) )
             }
-        }, error = function(e) {
-            a <- args[[i]]
-            if (is.name(a)) {
-                result[[i]] <<- c(name = as.character(a), package = NA)
-            } else if (is.language(a) && length(a) == 3 && a[[1]] %in% c(as.name(":::"), as.name("::"))) {
-                result[[i]] <<- c(name = as.character(a[[3]]), package = as.character(a[[2]]))
-            } else {
-                print("error")
-                stop(paste("Invalid argument index", i));
-            }
-        })
+            result[[i]] <- c(name = x[2], package = x[1])
+        } else {
+            stop("Function names should be provided as character string!")
+        }
         i <- i + 1
     }
     result
