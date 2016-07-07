@@ -146,37 +146,35 @@ extract_func_name <- function(filename, modify.characters = TRUE){
 #' @param ... Functions either as character vectors, or package:::function expressions.
 #' @return List of parsed package and function names as characters.
 parseFunctionNames <- function(...) {
-    args <- unlist( list(...) )
-    result <- list()
-    result[ length(args) ] <- NULL
-    i <- 1
+    args <- unlist(list(...))
+    res <- list()
+    getInfo <- function(vector, arg, special) {
+        info <- c()
+        if (length(vector) > 2) {
+            warning( sprintf("Invalid function name: %s\n", arg ) )
+            info <- c(NA, NA)
+        } else if (length(vector) == 2) {
+            info <- unlist( ifelse(nchar(vector[1]) == 0, list(c(NA, vector[2])), list(vector)) )
+        } else {
+            info <- unlist( ifelse(nchar(vector) == 0, list(c(NA, special)), list(c(NA, vector[1]))) )
+        }
+        names(info) <- c("package","name")
+        list(info)
+    }
     for (arg in args) {
         if (is.character(arg)) {
-            # it is a character vector, use its value
             x <- strsplit(arg, ":::")[[1]]
+            y <- strsplit(arg, "::")[[1]]
             if (length(x) == 1 & nchar(x[1]) > 0) {
-                x <- strsplit(arg, "::")[[1]]
-                if (length(x) == 1) {
-                    x <- c(NA, x)
-                } else if (length(x) > 2) {
-                    warning( paste0("badly formatted package name: ", arg ) )
-                }
-            } else if (length(x) == 1 & nchar(x[1]) == 0) {
-                x <- c(NA, ":::")
-            } else if (length(x) == 2 & nchar(x[1]) == 0) {
-                x <- c(NA, x[2])
-            } else if (length(x) == 2 & nchar(x[1]) > 0) {
-                x <- c(x[1], x[2])
+                res <- c(res, getInfo(y, arg, "::"))
             } else {
-                warning( paste0("badly formatted package name: ", arg ) )
+                res <- c(res, getInfo(x, arg, ":::"))
             }
-            result[[i]] <- c(name = x[2], package = x[1])
         } else {
             stop("Function names should be provided as character string!")
         }
-        i <- i + 1
     }
-    result
+    res
 }
 
 #' @title Returns names of functions defined in given file(s)
