@@ -8,7 +8,7 @@
 #' @param output_dir directory where generated test cases will be saved
 #' @param verbose wheater display debug output
 #' @param timed whether result is dependent on time of generation
-test_gen <- function(root, output_dir, timed = F, verbose=testr_options("verbose")) {
+test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("verbose")) {
   if (verbose) {
     cat("Output:", output_dir, "\n")
     cat("Root:", root, "\n")
@@ -18,7 +18,7 @@ test_gen <- function(root, output_dir, timed = F, verbose=testr_options("verbose
     warning("Input dir/file doesn't exist!")
     return(invisible())
   }
-  if (file.info(root)$isdir){
+  if (file.info(root)$isdir) {
     all.capture <- lapply(list.files(root, recursive=TRUE, all.files = TRUE), function(x) file.path(root,x))
   } else {
     all.capture <- root
@@ -26,14 +26,11 @@ test_gen <- function(root, output_dir, timed = F, verbose=testr_options("verbose
   # output dir checks
   if (missing(output_dir)) stop("A output directory must be provided!");
   if (!file.exists(output_dir) || !file.info(output_dir)$isdir) dir.create(output_dir)
-  if (timed)
-    output_dir <- file.path(output_dir, format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
+  if (timed) output_dir <- file.path(output_dir, format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
   cache$output_dir <- output_dir
   # bad.arguments file to store incorrect arguments
   cache$bad_argv <- file.path(cache$output_dir, "bad_arguments");
-  if (!file.exists(cache$bad_argv)
-      && !file.create(cache$bad_argv))
-      stop("Unable to create file: ", cache$bad_argv)
+  if (!file.exists(cache$bad_argv) && !file.create(cache$bad_argv)) stop("Unable to create file: ", cache$bad_argv)
   cache$tid <- list()
   Map(function(x) { process_capture(x) }, all.capture)
   cache$tid <- NULL
@@ -51,19 +48,23 @@ ensure_file <- function(name) {
     fname <- gsub(.Platform$file.sep, "sep", name)
     # replace ::: with ___ so that we work on Windows too
     fname <- gsub(":::", "___", fname)
+
     # check if the folder for the function exists and create it if not
     tc.folder = file.path(cache$output_dir, fname, fsep = .Platform$file.sep)
     dir.create(tc.folder, showWarnings = FALSE)
+
     # get the index of the file, based on number of files in the folder (but use the cache information for it)
     cache$tid[[name]] <- ifelse(is.null(cache$tid[[name]]), 0, cache$tid[[name]] + 1)
-    tc.file = file.path(tc.folder, paste("test-", cache$tid[[name]], ".R", sep=""), fsep = .Platform$file.sep)
-    # the file should not exist
-    if (!file.create(tc.file))
-        stop("Unable to create file: ", tc.file)
+    tc.file = file.path(tc.folder, paste("test.", gsub("___", ".", fname), ".R", sep = ""), fsep = .Platform$file.sep)
+
     # TODO perhaps this is not needed for testthat
-    write("library(testthat)\n", file = tc.file, append = TRUE)
-    # write context information (the function name)
-    write(paste("context(\"",name,"\")\n", sep=""), file = tc.file, append = TRUE)
+    if (!file.exists(tc.file)) {
+        file.create(tc.file)
+        write("library(hamcrest)\n", file = tc.file, append = TRUE)
+    } else {
+        write("\n", file = tc.file, append = TRUE)
+    }
+
     return(tc.file)
 }
 
@@ -71,10 +72,10 @@ ensure_file <- function(name) {
 #'
 #' @description This function parses file with closure capture information and generates test cases
 #' @param cap_file path to closure capture file
-process_capture <- function(cap_file){
+process_capture <- function(cap_file) {
   lines <- readLines(cap_file)
   cache$i <- 1
-  while (cache$i < length(lines)){
+  while (cache$i < length(lines)) {
     # read test case information
     symbol.values <- read_symbol_values(lines)
     symb <- symbol.values[[1]]
@@ -88,10 +89,10 @@ process_capture <- function(cap_file){
     #### see what we get
     if (feedback$type == "err") {
       #### the captured information is not usable
-      write(feedback$msg, file=cache$bad_argv, append=TRUE);
+      write(feedback$msg, file = cache$bad_argv, append = TRUE);
     } else if (feedback$type == "src") {
       #### good, we get the source code
-      write(feedback$msg, file=tc.file, append=TRUE);
+      write(feedback$msg, file = tc.file, append = TRUE);
     } else {
       stop("Not reached!");
     }
@@ -100,14 +101,14 @@ process_capture <- function(cap_file){
 }
 
 
-read_symbol_values <- function(lines){
+read_symbol_values <- function(lines) {
   k_sym <- 1
   k_value <- 1
   symb <- vector()
   vsym <- vector()
   symb[k_sym] <- ""
   vsym[k_value] <- ""
-  while (starts_with(kSymbPrefix, lines[cache$i])){
+  while (starts_with(kSymbPrefix, lines[cache$i])) {
     symb[k_sym] <- paste(symb[k_sym], substr_line(lines[cache$i]), sep = "")
     cache$i <- cache$i + 1
     k_sym <- k_sym + 1
@@ -129,7 +130,7 @@ read_value <- function(lines, prefix){
     j <- j + 1
   }
   cache$i <- j
-  return(paste(value, collapse="\n", sep=""))
+  return(paste(value, collapse = "\n", sep = ""))
 }
 
 #' @title Generates a testcase for closure function
@@ -162,8 +163,9 @@ generate_tc <- function(symb, vsym, func, argv) {
   valid.argv <- parse_eval(argv)
 
   # proper argument should always be packed in a list
-  if (!valid.argv)
-    return(list(type="err", msg=paste("func:", func, "\nargv:", argv, "\n")))
+  if (!valid.argv) {
+      return(list(type = "err", msg = paste("func:", func, "\nargv:", argv, "\n")))
+  }
 
   # TODO: potentially good arguments, alter it
   #  argv.obj.lst <- alter.arguments(argv.obj);
@@ -177,42 +179,47 @@ generate_tc <- function(symb, vsym, func, argv) {
       call.args <- ""
       arg_names <- names(args)
       for (i in 1:length(args)) {
-        if (arg_names[i] != "")
-          call.args <- paste(call.args, arg_names[i], "=", sep = "")
-        call.args <- paste(call.args, args[[i]], ",", sep="")
+        if (arg_names[i] != "") {
+            call.args <- paste(call.args, arg_names[i], "=", sep = "")
+        }
+        call.args <- paste(call.args, args[[i]], ",", sep = "")
       }
       call.args <- substr(call.args, 1, nchar(call.args) - 1)
-      call <- paste(call, sprintf("%s(%s)", func, call.args), "\n", sep="")
-    } else
-      call <- paste(call, sprintf("%s(%s)", func, paste(args, collapse=",")), "\n", sep="")
+      call <- paste(call, sprintf("%s(%s)", func, call.args), "\n", sep = "")
+    } else {
+        call <- paste(call, sprintf("%s(%s)", func, paste(args, collapse=",")), "\n", sep = "")
+    }
   } else {
-    call <- paste(call, func, "()", "\n", sep="")
+    call <- paste(call, func, "()", "\n", sep = "")
   }
 
-  if (length(symb) > 0 && symb[1] != "")
-    call <- paste(variables, call, sep="")
+  if (length(symb) > 0 && symb[1] != "") {
+      call <- paste(variables, call, sep = "")
+  }
   cache$warns <- NULL
   cache$errs <- NULL
-  retv <- withCallingHandlers(tryCatch(eval(parse(text=call), envir = new.env()),
-                                       error=function(e) cache$errs <- e$message, silent = TRUE),
-                   warning=function(w) {
-                     cache$warns <- ifelse(is.null(cache$warns), w$message, paste(cache$warns, w$message, sep="; "))
+  retv <- withCallingHandlers(tryCatch( eval(parse(text = call), envir = new.env()),
+                                       error = function(e) cache$errs <- e$message, silent = TRUE),
+                   warning = function(w) {
+                     cache$warns <- ifelse(is.null(cache$warns), w$message, paste(cache$warns, w$message, sep = "; "))
                      invokeRestart("muffleWarning")
                      })
     retv <- quoter(retv)
 
     # testhat formatter
-    src <- paste("test_that(", shQuote(cache$tid[[func]]), ", {\n")
+    src <- paste("test.", gsub(":::", ".", func), ".", cache$tid[[func]], " <- function() {\n\n", sep = "")
     if (! is.null(cache$errs)) {
-        call <- paste("expect_error({\n", call, "}\n,", shQuote(cache$errs), ")")
+        src <- paste(src, "\n    expected <- try(", paste(deparse(call), " )", collapse = "\n"), "")
+        src <- paste(src, "\n    assertThat( class(tryResult), equalTo(\"try-error\"))", sep = "")
+        call <- paste("\n}")
     } else {
-        src <- paste(src, "\nexpected <-", paste(deparse(retv), collapse = "\n"), "\n")
-        call <- paste("expect_equal({", call, "}, expected)")
+        src <- paste(src, "\n    expected <-", paste(deparse(retv), collapse = "\n"), "")
+        src <- paste(src, "\n    assertThat( ", call, " , ", "equalTo( expected ) )", sep = "")
+        call <- paste("\n}")
     }
-    if (! is.null(cache$warns)) {
-        call <- paste("expect_warning(", call, ", ", shQuote(cache$warns), ")")
-    }
-    src <- paste(src, call, "\n})")
-    src = deparse(parse(text = src)[[1]])
-    list(type="src", msg=src);
+
+    src <- paste(src, call)
+    print(func)
+    src <- deparse(parse(text = src)[[1]])
+    list(type = "src", msg = src);
 }

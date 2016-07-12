@@ -14,7 +14,7 @@
 #' @export
 
 gen_from_function <- function(package.dir = ".", code, functions, filter = TRUE, exclude_existing_tests = FALSE, build = TRUE, timed = FALSE, output, verbose = testr_options("verbose")) {
-    cleanup = F
+    cleanup = FALSE
     # stop all ongoing captures
     stop_capture_all()
     if (build) {
@@ -27,26 +27,21 @@ gen_from_function <- function(package.dir = ".", code, functions, filter = TRUE,
         package.path = package.dir
     }
     # install the package
-    if (verbose)
-        cat(paste("Installing package", package.path, "\n"))
-    #devtools:::install(package.name, quiet = T)
-    install.packages(package.path, repos = NULL, quiet = T, type = "source")
+    if (verbose) cat(paste("Installing package", package.path, "\n"))
+    install.packages(package.path, repos = NULL, quiet = TRUE, type = "source")
     # get list of all functions
     package = devtools::as.package(package.dir)
     # TODO I don't thing this line is needed anymore
     l <- library
-    l(package = package$package, character.only = T)
-    if (verbose)
-        cat(paste("Package", package$package, "installed\n"))
+    l(package = package$package, character.only = TRUE)
+    if (verbose) cat(paste("Package", package$package, "installed\n"))
     # if function names were not specified,
     if (missing(functions)) {
         # get list of all functions defined in the package' R code
         functions <- list_functions(file.path(package$path, "R"))
-        if (verbose)
-            cat("All functions from package will be decorated\n")
+        if (verbose) cat("All functions from package will be decorated\n")
     }
-    if (verbose)
-        cat(paste("Decorating",length(functions), "functions\n"))
+    if (verbose) cat(paste("Decorating",length(functions), "functions\n"))
     # capture all functions in the package
     for (f in functions) {
         decorate(f, package$package, verbose = verbose)
@@ -62,7 +57,7 @@ gen_from_function <- function(package.dir = ".", code, functions, filter = TRUE,
     if (missing(output)) {
         if (filter) {
             output = "temp"
-            cleanup = T
+            cleanup = TRUE
         } else {
             output = file.path(package$path, "tests")
         }
@@ -74,12 +69,11 @@ gen_from_function <- function(package.dir = ".", code, functions, filter = TRUE,
     if (filter) {
         if (verbose)
             cat("Pruning tests - this may take some time...\n")
-        filter_tests(output, file.path(package$path, "tests/testthat"), functions, package.dir, compact = T, verbose = verbose)
+        filter_tests(output, file.path(package$path, "tests/testthat"), functions, package.dir, compact = TRUE, verbose = verbose)
     }
     # clear the temp folder, if we used a temp folder implicitly
-    if (cleanup)
-        unlink(output, recursive = T)
-    detach(paste("package", package$package, sep=":"), unload = T, character.only = T)
+    if (cleanup) unlink(output, recursive = T)
+    detach(paste("package", package$package, sep=":"), unload = TRUE, character.only = TRUE)
 }
 
 
@@ -100,32 +94,29 @@ gen_from_function <- function(package.dir = ".", code, functions, filter = TRUE,
 gen_from_package <- function(package.dir = ".", include.tests = FALSE, timed = FALSE, filter = TRUE, build = TRUE, output, verbose = testr_options("verbose")) {
     package = devtools::as.package(package.dir)
     devtools::document(package.dir)
-    detach(paste("package", package$package, sep=":"), unload = T, character.only = T)
+    detach(paste("package", package$package, sep=":"), unload = TRUE, character.only = TRUE)
     f <- function() {
         # run package vignettes
         info <- tools::getVignetteInfo(package = package$package)
-        vdir <- info[,2]
-        vfiles <- info[,6]
+        vdir <- info[ ,2]
+        vfiles <- info[ ,6]
         p <- file.path(vdir, "doc", vfiles)
-        if (verbose)
-            cat(paste("Running vignettes (", length(vfiles), "files)\n"))
+        if (verbose) cat(paste("Running vignettes (", length(vfiles), "files)\n"))
         # vignettes are not expected to be runnable, silence errors
-        invisible(tryCatch(sapply(p, source), error=function(x) invisible()))
+        invisible( tryCatch( sapply(p, source), error = function(x) invisible() ) )
         # run package examples
         manPath <- file.path(package.dir, "man")
-        examples <- list.files(manPath, pattern = "\\.[Rr]d$", no.. = T)
+        examples <- list.files(manPath, pattern = "\\.[Rr]d$", no.. = TRUE)
         if (length(examples) != 0) {
-            if (verbose)
-                cat(paste("Running examples (", length(examples), "man files)\n"))
+            if (verbose) cat(paste("Running examples (", length(examples), "man files)\n"))
             for (f in examples) {
                 code <- example_code(file.path(manPath, f))
-                tryCatch(eval(parse(text = code)), error=function(x) print(x))
+                tryCatch(eval(parse(text = code)), error = function(x) print(x))
             }
         }
         # run tests
         if (include.tests) {
-            if (verbose)
-                cat("Running package tests\n")
+            if (verbose) cat("Running package tests\n")
             testthat::test_dir(file.path(package.dir, "tests", "testthat"), filter = NULL)
         }
     }
@@ -145,12 +136,11 @@ gen_from_package <- function(package.dir = ".", include.tests = FALSE, timed = F
 #' @export
 start_capture <- function(..., verbose = testr_options("verbose")) {
     old <- testr_options("capture.arguments")
-    if (old)
-        testr_options("capture.arguments", FALSE)
-    for (f in parseFunctionNames(...))
+    if (old) testr_options("capture.arguments", FALSE)
+    for (f in parseFunctionNames(...)) {
         decorate(f[["name"]], f[["package"]], verbose = verbose)
-    if (old)
-        testr_options("capture.arguments", TRUE)
+    }
+    if (old) testr_options("capture.arguments", TRUE)
     invisible(NULL)
 }
 
@@ -172,8 +162,9 @@ start_capture_builtins <- function(internal.only = FALSE, verbose = testr_option
 #' @param verbose TRUE to display additional information
 #' @export
 stop_capture <- function(..., verbose = testr_options("verbose")) {
-    for (f in parseFunctionNames(...))
+    for (f in parseFunctionNames(...)) {
         undecorate(f$name, f$package, verbose = verbose)
+    }
     invisible(NULL)
 }
 
@@ -198,11 +189,11 @@ stop_capture_all <- function(verbose = testr_options("verbose")) {
 #' @param clear_capture if FALSE captured traces will not be deleted after the generation so that subsequent calls to generate() can use them too
 #' @export
 generate <- function(output_dir, root = testr_options("capture.folder"),
-                     timed = F, clear_capture = T, verbose = testr_options("verbose")) {
+                     timed = FALSE, clear_capture = TRUE, verbose = testr_options("verbose")) {
     cache$output.dir <- output_dir
     test_gen(root, output_dir, timed, verbose = verbose);
     if (clear_capture) {
-        unlink(file.path(root, list.files(path = root, no.. = T)))
+        unlink(file.path(root, list.files(path = root, no.. = TRUE)))
     }
 
 }
@@ -273,13 +264,16 @@ gen_from_code <- function(code, output_dir, ...) {
 #' @param ... Functions to be tested.
 #' @export
 gen_from_source <- function(src.root, output_dir, ...) {
-    if (!file.exists(src.root))
+    if (!file.exists(src.root)) {
         stop("Supplied source does not exist")
-    if (file.info(src.root)$isdir)
-        src.root <- list.files(src.root, pattern = "\\[rR]", recursive = T, full.names = T)
+    }
+    if (file.info(src.root)$isdir) {
+        src.root <- list.files(src.root, pattern = "\\[rR]", recursive = TRUE, full.names = TRUE)
+    }
     start_capture(...)
-    for (src.file in src.root)
-        source(src.file, local = T)
+    for (src.file in src.root) {
+        source(src.file, local = TRUE)
+    }
     stop_capture_all()
     generate(output_dir)
     invisible()
