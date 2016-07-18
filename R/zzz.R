@@ -24,7 +24,9 @@ blacklist <- c(".GlobalEnv", ".Internal", ".Primitive", "substitute",
                # errors with trace
                "match.call", ".doTrace", "tracingState", "traceback", "trace", "get0",
                "forceAndCall", # added in R.3.2.1
-               "library"
+               "library",
+               # cause error (Parham)
+               "?", "unlist"
 )
 
 sys <- c("system.time", "system.file", "sys.status",
