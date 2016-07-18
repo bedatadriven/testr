@@ -42,8 +42,9 @@ test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("ver
 #'
 #' @description This function creates a test case file if one does not exist already
 #' @param name directory where generated test cases will be saved
+#' @param funHash hash of function name and function arguments
 #' @seealso test_gen
-ensure_file <- function(name) {
+ensure_file <- function(name, funHash) {
 
     fname <- gsub(.Platform$file.sep, "sep", name)
     # replace ::: with ___ so that we work on Windows too
@@ -55,14 +56,14 @@ ensure_file <- function(name) {
 
     # get the index of the file, based on number of files in the folder (but use the cache information for it)
     cache$tid[[name]] <- ifelse(is.null(cache$tid[[name]]), 0, cache$tid[[name]] + 1)
-    tc.file = file.path(tc.folder, paste("test.", gsub("___", ".", fname), ".R", sep = ""), fsep = .Platform$file.sep)
+    tc.file = file.path(tc.folder, paste("test.", gsub("___", ".", fname), ".", funHash, ".R", sep = ""), fsep = .Platform$file.sep)
 
     # TODO perhaps this is not needed for testthat
     if (!file.exists(tc.file)) {
         file.create(tc.file)
         write("library(hamcrest)\n", file = tc.file, append = TRUE)
     } else {
-        write("\n", file = tc.file, append = TRUE)
+        tc.file <- "REPLICATED_TEST_CASE"
     }
 
     return(tc.file)
@@ -72,6 +73,7 @@ ensure_file <- function(name) {
 #'
 #' @description This function parses file with closure capture information and generates test cases
 #' @param cap_file path to closure capture file
+#' @importFrom digest digest
 process_capture <- function(cap_file) {
   lines <- readLines(cap_file)
   cache$i <- 1
@@ -83,13 +85,17 @@ process_capture <- function(cap_file) {
     func <- read_value(lines, kFuncPrefix)
     args <- read_value(lines, kArgsPrefix)
 
-    tc.file <- ensure_file(func)
+    d_func_arg <- digest::digest( paste0(digest::digest(func), digest::digest(args)) )
+
+    tc.file <- ensure_file(func, d_func_arg)
     feedback <- generate_tc(symb, vsym, func, args)
 
     #### see what we get
     if (feedback$type == "err") {
       #### the captured information is not usable
       write(feedback$msg, file = cache$bad_argv, append = TRUE);
+    } else if (tc.file == "REPLICATED_TEST_CASE") {
+        print(tc.file)
     } else if (feedback$type == "src") {
       #### good, we get the source code
       write(feedback$msg, file = tc.file, append = TRUE);
