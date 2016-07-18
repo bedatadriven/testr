@@ -213,19 +213,17 @@ generate_tc <- function(symb, vsym, func, argv) {
     retv <- quoter(retv)
 
     # testhat formatter
-    src <- paste("test.", gsub(":::", ".", func), ".", cache$tid[[func]], " <- function() {\n\n", sep = "")
+    #src <- paste("test.", gsub(":::", ".", func), ".", cache$tid[[func]], " <- function() {\n\n", sep = "")
     if (! is.null(cache$errs)) {
-        src <- paste(src, "\n    expected <- try(", paste(deparse(call), " )", collapse = "\n"), "")
-        src <- paste(src, "\n    assertThat( class(tryResult), equalTo(\"try-error\"))", sep = "")
-        call <- paste("\n}")
+        # src <- paste(src, "\n    expected <- try(", paste(deparse(call), " )", collapse = "\n"), "")
+        # src <- paste(src, "\n    assertThat( class(tryResult), equalTo(\"try-error\"))", sep = "")
+        # call <- paste("\n}")
     } else {
-        src <- paste(src, "\n    expected <-", paste(deparse(retv), collapse = "\n"), "")
-        src <- paste(src, "\n    assertThat( ", call, " , ", "equalTo( expected ) )", sep = "")
-        call <- paste("\n}")
+        src  <- paste(src, "\n    expected <-", paste(deparse(retv), collapse = "\n"), "")
+        call <- paste(src, "\n    assertThat( ", call, " , ", "identicalTo( expected, tol = 1e-6 ) )", sep = "")
     }
 
     src <- paste(src, call)
-    print(func)
     src <- deparse(parse(text = src)[[1]])
     list(type = "src", msg = src);
 }
