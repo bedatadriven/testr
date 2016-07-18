@@ -213,17 +213,13 @@ generate_tc <- function(symb, vsym, func, argv) {
     retv <- quoter(retv)
 
     # testhat formatter
-    #src <- paste("test.", gsub(":::", ".", func), ".", cache$tid[[func]], " <- function() {\n\n", sep = "")
-    if (! is.null(cache$errs)) {
-        # src <- paste(src, "\n    expected <- try(", paste(deparse(call), " )", collapse = "\n"), "")
-        # src <- paste(src, "\n    assertThat( class(tryResult), equalTo(\"try-error\"))", sep = "")
-        # call <- paste("\n}")
-    } else {
-        src  <- paste(src, "\n    expected <-", paste(deparse(retv), collapse = "\n"), "")
-        call <- paste(src, "\n    assertThat( ", call, " , ", "identicalTo( expected, tol = 1e-6 ) )", sep = "")
+    src <- " \n"
+    if (is.null(cache$errs) && is.null(cache$warns)) {
+        src <- paste(src, "\nexpected <-", paste(deparse(retv), collapse = "\n"), "\n")
+        src <- paste(src, "\n\nassertThat(", call, ",  equalTo( expected ) )", sep = "")
+        call <- paste("\n")
     }
 
-    src <- paste(src, call)
-    src <- deparse(parse(text = src)[[1]])
+    src <- paste(src, call, "\n")
     list(type = "src", msg = src);
 }
