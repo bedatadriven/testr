@@ -6,8 +6,8 @@
 #'
 #' @param root a directory containg capture information or capture file
 #' @param output_dir directory where generated test cases will be saved
-#' @param verbose wheater display debug output
 #' @param timed whether result is dependent on time of generation
+#' @param verbose wheater display debug output
 test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("verbose")) {
   if (verbose) {
     cat("Output:", output_dir, "\n")

@@ -4,7 +4,8 @@
 \alias{test_gen}
 \title{Test Case generator based on capture files}
 \usage{
-test_gen(root, output_dir, timed = F, verbose = testr_options("verbose"))
+test_gen(root, output_dir, timed = FALSE,
+  verbose = testr_options("verbose"))
 }
 \arguments{
 \item{root}{a directory containg capture information or capture file}

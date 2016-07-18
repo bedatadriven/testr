@@ -4,8 +4,8 @@
 \alias{generate}
 \title{Generates tests from captured information.}
 \usage{
-generate(output_dir, root = testr_options("capture.folder"), timed = F,
-  clear_capture = T, verbose = testr_options("verbose"))
+generate(output_dir, root = testr_options("capture.folder"), timed = FALSE,
+  clear_capture = TRUE, verbose = testr_options("verbose"))
 }
 \arguments{
 \item{output_dir}{Directory to which the tests should be generated.}
