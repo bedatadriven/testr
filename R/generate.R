@@ -215,7 +215,7 @@ generate_tc <- function(symb, vsym, func, argv) {
     # testhat formatter
     src <- ""
     if (is.null(cache$errs) && is.null(cache$warns)) {
-        src <- paste(src, "expected <-", paste(deparse(retv, control = c("hexNumeric", "showAttributes")), collapse = "\n"), "\n")
+        src <- paste(src, "expected <-", paste(deparse(retv, control = c("hexNumeric", "showAttributes", "keepInteger")), collapse = "\n"), "\n")
         call <- paste("\n\nassertThat(", call, ",  identicalTo( expected, tol = 1e-6 ) )", sep = "")
     }
 
