@@ -6,8 +6,8 @@ remove_failing_tcs <- function()
 {
     ## check if generated test cases run without failure
     # get the generated test cases
-    capt_dir <- getCaptDir()
-    tc <- getTests(capt_dir)
+    capt_dir <- get_capt_dir()
+    tc <- get_tests(capt_dir)
     # check which test cases fail?
     res <- sapply(tc, function(x) {
         oldGlobals <- c(ls(.GlobalEnv), "testEnv")
@@ -19,7 +19,7 @@ remove_failing_tcs <- function()
     })
     # remove failing test cases
     unlink(names(res[res == TRUE]))
-    getTests(capt_dir)
+    get_tests(capt_dir)
 }
 
 #' @title find_packages_using_function
@@ -297,6 +297,7 @@ run_all_tests <-
 #' @export
 get_tests <- function(capt_dir)
 {
+    print(capt_dir)
     d <- list.files(capt_dir, pattern = ".R$", recursive = TRUE,
                     full.names = TRUE)
     rm <- grep("^capture", list.files(capt_dir, recursive = TRUE))

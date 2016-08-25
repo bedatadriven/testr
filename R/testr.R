@@ -139,6 +139,8 @@ start_capture <- function(..., verbose = testr_options("verbose")) {
     if (old) testr_options("capture.arguments", FALSE)
     for (f in parseFunctionNames(...)) {
         decorate(f[["name"]], f[["package"]], verbose = verbose)
+        set_pkg_name(c(f[["package"]], testEnv$pkg_name))
+        set_function_name(c(f[["name"]], testEnv$fname))
     }
     if (old) testr_options("capture.arguments", TRUE)
     invisible(NULL)

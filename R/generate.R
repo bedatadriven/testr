@@ -233,17 +233,27 @@ generate_tc <- function(symb, vsym, func, argv)
 #' @title writeCapturedTests
 #' @description creates an archive of generated test cases
 #' @param path path to store the archive
-#' @param test_path location of generated test cases
 #' @export
-write_captured_tests <- function(path, test_path= testEnv$test_dir)
+write_captured_tests <- function(path)
 {
+    stop_capture_all()
+    generate("capture")
+    if (is.null(testEnv$root))
+        set_root(getwd())
+    set_capt_dir(file.path(testEnv$root,"capture"))
+
     tc <- remove_failing_tcs()
-    if (length(tc)) {
-        if (!dir.exists(path))
-            dir.create(path)
-        zip_call <- paste0("tar -czvf ", path, "/test.", pkg_name,
-                           ".", fname, ".tar.gz -C ", test_path, " .")
-        system(zip_call)
+    dirs <- list.dirs(testEnv$capt_dir, recursive = FALSE)
+
+    if (length(grep("___", dirs))) {
+        if (!dir.exists(file.path(testEnv$root, path)))
+            dir.create(file.path(testEnv$root, path))
+        for (dir in dirs[grep("___", dirs)]) {
+            zip_call <- paste0("tar -czvf ", file.path(testEnv$root, path), "/test.",
+                               sub("___", ".", basename(dir)),
+                               ".tar.gz -C ", dir, " .")
+            system(zip_call)
+        }
     }
 }
 
