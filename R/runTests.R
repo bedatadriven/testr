@@ -119,7 +119,6 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
 
             lines <- c(
                 paste0("pkgname <- \"", pkg, "\""),
-                paste0("testr:::setExamedPkgName(\"", pkg, "\")"),
                 "assign(\"par.postscript\", graphics::par(no.readonly = TRUE))",
                 "options(contrasts = c(unordered = \"contr.treatment\", ordered = \"contr.poly\"))",
                 "graphics.off()"
@@ -127,12 +126,12 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
             cat(lines, sep = "\n", file = out)
             if (pkg == "tcltk") {
                 if (capabilities("tcltk"))
-                    cat("require('tcltk')\n\n", file = out)
+                    cat("require('tcltk')\n", file = out)
                 else
-                    cat("stop(\"tcltk not found!\")\n\n", file = out)
+                    cat("stop(\"tcltk not found!\")\n", file = out)
             }
             else if (pkg != "base")
-                cat("library('", pkg, "')\n\n", sep = "", file = out)
+                cat("library('", pkg, "')\n", sep = "", file = out)
 
             for (file in files) {
                 nm <- sub("\\.R$", "", basename(file))
@@ -146,8 +145,7 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
                               "^[[:space:]]*\\?", "^[[:space:]]*help\\.search",
                               "^[[:space:]]*nameEx.{2}help\\.search", "demo\\(",
                               "data\\(package", "data\\(\\)",
-                              "^library\\(\\)", "^library\\(lib\\.loc"#,
-                              #"\\([[:space:]]*help\\(", "[[:space:]]*vignette\\("
+                              "^library\\(\\)", "^library\\(lib\\.loc"
                 )
 
                 for (pattern in patterns) {
@@ -319,11 +317,11 @@ get_tests <- function(capt_dir)
     d
 }
 
-#' @title generateTestCases
+#' @title generate_test_cases
 #' @description generates test cases based on environmental variables
 #' @import devtools methods
 #' @export
-generateTestCases <- function(){
+generate_test_cases <- function(){
     set_function_name(Sys.getenv("function_name"))
     set_pkg_name(Sys.getenv("package_name"))
     set_job(Sys.getenv("JOB_NAME"))
@@ -331,7 +329,6 @@ generateTestCases <- function(){
     set_pkg_limit(Sys.getenv("pkg_limit"))
     set_scope(Sys.getenv("scope"))
     set_root(getwd())
-
     if (as.logical(Sys.getenv("install_testr"))) {
         if(!require(devtools)){
             install.packages("devtools", dependencies = TRUE,
@@ -352,16 +349,12 @@ generateTestCases <- function(){
         pkg_limit =  as.numeric(testEnv$pkg_limit),
         custom_pkg_list = testEnv$custom_pkg_list
     )
-
     setwd(testEnv$root)
     stop_capture_all()
     generate("capture")
-
     set_capt_dir(file.path(testEnv$root,"capture"))
-
     set_arch_dir(file.path(testEnv$root,"tests"))
     set_test_dir(file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___",
                                                        testEnv$fname)))
-
     write_captured_tests(testEnv$arch_dir)
 }
