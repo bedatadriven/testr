@@ -3,7 +3,7 @@ library(testthat)
 
 context("Generation")
 
-test_that('Test write_captured_tests()', {
+test_that('Test start_capture()', {
     testr::start_capture("stats::dpois")
     dpois(0:7, lambda = 1)
     testr::write_captured_tests("/tmp")
@@ -21,6 +21,14 @@ test_that('Test write_captured_tests()', {
     unlink("capture")
 })
 
+test_that('Test find_packages_using_function()', {
+    x <- testr::find_packages_using_function("cor")
+    y <- testr::find_packages_using_function("aksagdK*@&e9dgiakegdkgjqge93yqe")
+    expect_true(length(x) > 0)
+    expect_true(class(x[1]) == "character")
+    expect_true(length(x) == 0)
+    expect_true(class(x) == "character")
+})
 
 test_that('Generate Abbreviate', {
     expect_warning(generate("abbreviate", "CaptureInfo/capture"))

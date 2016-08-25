@@ -28,33 +28,33 @@ remove_failing_tcs <- function()
 #' @export
 find_packages_using_function <- function(functionName, limit = 100, lib.loc = NULL)
 {
-    top <- c()
+    top <- c(character())
     if(missing(lib.loc))
         lib.loc <- .libPaths()[1]
-
     call <- paste0("egrep -R -n \'\\<",functionName,"\\>\' ",lib.loc)
     res <- system(call, intern = TRUE)
-
     # remove line that dont start with library path
     if(length(res)) {
-        keep <- grepl(.libPaths()[1], res)
-        res <- res[keep]
-        # remove library path
-        res <- sapply(res, function(x) {
-            strsplit(x[[1]], .libPaths()[1])[[1]][2]},
-            simplify = TRUE, USE.NAMES = FALSE)
-        # select package name from path
-        res <- sapply(res, function(x) {
-            strsplit(x[[1]], "/")[[1]][2]},
-            simplify = TRUE, USE.NAMES = FALSE)
-        # make a count table from package name occurence
-        if(length(res) > 0) {
-            resTab <- as.data.frame(unclass(rle(sort(res))))[ , 2:1]
-            resTab <- resTab[with(resTab, order(-lengths)), ]
-            if (nrow(resTab < limit))
-                top <- row.names(resTab)
-            else
-                top <- row.names(resTab[1:limit, ])
+        for (path in .libPaths()) {
+            keep <- grepl(path, res)
+            res2 <- res[keep]
+            # remove library path
+            res2 <- sapply(res2, function(x) {
+                strsplit(x[[1]], path)[[1]][2]},
+                simplify = TRUE, USE.NAMES = FALSE)
+            # select package name from path
+            res2 <- sapply(res2, function(x) {
+                strsplit(x[[1]], "/")[[1]][2]},
+                simplify = TRUE, USE.NAMES = FALSE)
+            # make a count table from package name occurence
+            if(length(res2) > 0) {
+                resTab <- as.data.frame(unclass(rle(sort(res2))))[ , 2:1]
+                resTab <- resTab[with(resTab, order(-lengths)), ]
+                if (nrow(resTab) < limit)
+                    top <- c(top, as.character(resTab$values))
+                else
+                    top <- c(top, as.character(resTab$values[1:limit]))
+            }
         }
     }
     top
