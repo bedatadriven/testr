@@ -297,55 +297,59 @@ testEnv$arch_dir        <- c() # file.path(testEnv$root,"tests")
 testEnv$test_dir        <- c() # file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___", testEnv$fname))
 
 
-setExamedPkgName <- function(pkgname)
+set_examed_pkg_name <- function(pkgname)
 {
     testEnv$pkgname <- pkgname
 }
-setPkgName <- function(pkg_name)
+set_pkg_name <- function(pkg_name)
 {
     testEnv$pkg_name <- pkg_name
 }
-setFunctionName <- function(fname)
+set_function_name <- function(fname)
 {
     testEnv$fname <- fname
 }
-setJob <- function(job)
+set_job <- function(job)
 {
     testEnv$job <- job
 }
-setBuild <- function(build)
+set_build <- function(build)
 {
     testEnv$build <- build
 }
-setPkgLimit <- function(limit)
+set_pkg_limit <- function(limit)
 {
     testEnv$pkg_limit <- limit
 }
-setScope <- function(scope = c("all"))
+set_scope <- function(scope = c("all"))
 {
     testEnv$scope <- scope
 }
-setCustomPkgList <- function(pkgs)
+set_custom_pkg_list <- function(pkgs)
 {
     testEnv$custom_pkg_list <- pkgs
 }
-setRoot <- function(root)
+set_root <- function(root)
 {
     testEnv$root <- root
 }
-setTestOutDir <- function(test_out_dir)
+set_test_out_dir <- function(test_out_dir)
 {
     testEnv$testOutDir <- test_out_dir
 }
-setCaptDir <- function(capt_dir){
+set_capt_dir <- function(capt_dir)
+{
     testEnv$capt_dir <- capt_dir
 }
-getCaptDir <- function(){
+get_capt_dir <- function()
+{
     testEnv$capt_dir
 }
-setArchDir <- function(arch_dir){
+set_arch_dir <- function(arch_dir)
+{
     testEnv$arch_dir <- arch_dir
 }
-setTestDir <- function(test_dir){
+set_test_dir <- function(test_dir)
+{
     testEnv$test_dir <- test_dir
 }

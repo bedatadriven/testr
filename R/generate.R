@@ -235,9 +235,9 @@ generate_tc <- function(symb, vsym, func, argv)
 #' @param path path to store the archive
 #' @param test_path location of generated test cases
 #' @export
-writeCapturedTests <- function(path, test_path= testEnv$test_dir)
+write_captured_tests <- function(path, test_path= testEnv$test_dir)
 {
-    tc <- removeFailingTCs()
+    tc <- remove_failing_tcs()
     if (length(tc)) {
         if (!dir.exists(path))
             dir.create(path)

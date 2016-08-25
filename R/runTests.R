@@ -1,8 +1,8 @@
 
-#' @title removeFailingTCs
+#' @title remove_failing_tcs
 #' @description removes the test cases that fail in GNU R
 #' @export
-removeFailingTCs <- function()
+remove_failing_tcs <- function()
 {
     ## check if generated test cases run without failure
     # get the generated test cases
@@ -22,11 +22,11 @@ removeFailingTCs <- function()
     getTests(capt_dir)
 }
 
-#' @title findPackagesUsingFunction
+#' @title find_packages_using_function
 #' @description find packages that use the function of interest
 #' @param functionName name of the function
 #' @export
-findPackagesUsingFunction <- function(functionName, limit = 100, lib.loc = NULL)
+find_packages_using_function <- function(functionName, limit = 100, lib.loc = NULL)
 {
     require(stringr)
     top <- c()
@@ -65,7 +65,7 @@ findPackagesUsingFunction <- function(functionName, limit = 100, lib.loc = NULL)
 #' @description ectract and run example/test codes from package
 #' @param pkg name of the packge
 #' @export
-runPackageTests <- function (pkg, lib.loc = NULL, outDir)
+run_package_tests <- function (pkg, lib.loc = NULL, outDir)
 {
     pkgdir <- find.package(pkg)
     owd1    <- setwd(outDir)
@@ -222,14 +222,14 @@ runPackageTests <- function (pkg, lib.loc = NULL, outDir)
 }
 
 
-#' @title runAllTests
+#' @title run_all_tests
 #' @description run all the test/example codes from all the selected packages
 #' @param outDir root dir
 #' @param scope how to prioritize/select packages to run
 #' @param pkg_limit maximum number of packages to use for test generation
 #' @param custom_pkg_list custom list of packages of interest to use for test generation
 #' @export
-runAllTests <-
+run_all_tests <-
     function (outDir = ".", errorsAreFatal = FALSE,
               scope = c("all", "base", "recommended", "top"),
               srcdir = NULL, pkg_limit = NULL,
@@ -253,8 +253,8 @@ runAllTests <-
         if (scope %in% c("top"))
             pkgs <- c(
                 do.call(
-                    findPackagesUsingFunction,
-                    list(functionName = testEnv$fname, limit = pkg_limit, lib.loc = NULL),
+                    find_packages_using_function,
+                    list(functionName = testEnv$fname, limit = testEnv$pkg_limit, lib.loc = NULL),
                     envir = testEnv),
                 pkgs)
         if (!is.na(custom_pkg_list)) {
@@ -281,7 +281,7 @@ runAllTests <-
             for (pkg in pkgs) {
                 print(paste0("############ START PACKAGE: ", pkg, " #######"))
 
-                tryCatch(runPackageTests(pkg, .Library, outDir), error = function(e) print(e) )
+                tryCatch(run_package_tests(pkg, .Library, outDir), error = function(e) print(e) )
 
                 print(paste0("############ DONE WITH PACKAGE: ", pkg, " #######"))
             }
@@ -291,11 +291,11 @@ runAllTests <-
         invisible(status)
     }
 
-#' @title getTests
+#' @title get_tests
 #' @description get the names of all generated test cases
 #' @param capt_dir location of test cases
 #' @export
-getTests <- function(capt_dir)
+get_tests <- function(capt_dir)
 {
     d <- list.files(capt_dir, pattern = ".R$", recursive = TRUE,
                     full.names = TRUE)
@@ -310,13 +310,13 @@ getTests <- function(capt_dir)
 #' @import devtools methods
 #' @export
 generateTestCases <- function(){
-    setFunctionName(Sys.getenv("function_name"))
-    setPkgName(Sys.getenv("package_name"))
-    setJob(Sys.getenv("JOB_NAME"))
-    setBuild(Sys.getenv("BUILD_NUMBER"))
-    setPkgLimit(Sys.getenv("pkg_limit"))
-    setScope(Sys.getenv("scope"))
-    setRoot(getwd())
+    set_function_name(Sys.getenv("function_name"))
+    set_pkg_name(Sys.getenv("package_name"))
+    set_job(Sys.getenv("JOB_NAME"))
+    set_build(Sys.getenv("BUILD_NUMBER"))
+    set_pkg_limit(Sys.getenv("pkg_limit"))
+    set_scope(Sys.getenv("scope"))
+    set_root(getwd())
 
     if (as.logical(Sys.getenv("install_testr"))) {
         if(!require(devtools)){
@@ -330,11 +330,11 @@ generateTestCases <- function(){
                     branch = "master", upgrade_dependencies = FALSE)
     }
 
-    setTestOutDir(paste0(testEnv$root, "/", testEnv$job, "_", testEnv$build))
+    set_test_out_dir(paste0(testEnv$root, "/", testEnv$job, "_", testEnv$build))
     dir.create(testEnv$testOutDir, recursive = TRUE)
     start_capture( paste(testEnv$pkg_name, "::", testEnv$fname, sep = ""),
                    verbose = TRUE )
-    runAllTests(
+    run_all_tests(
         outDir = testEnv$testOutDir, scope = testEnv$scope,
         pkg_limit =  as.numeric(testEnv$pkg_limit),
         custom_pkg_list = testEnv$custom_pkg_list
@@ -344,11 +344,11 @@ generateTestCases <- function(){
     stop_capture_all()
     generate("capture")
 
-    setCaptDir(file.path(testEnv$root,"capture"))
+    set_capt_dir(file.path(testEnv$root,"capture"))
 
-    setArchDir(file.path(testEnv$root,"tests"))
-    setTestDir(file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___",
+    set_arch_dir(file.path(testEnv$root,"tests"))
+    set_test_dir(file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___",
                                                        testEnv$fname)))
 
-    writeCapturedTests(testEnv$arch_dir, testEnv$test_dir)
+    write_captured_tests(testEnv$arch_dir, testEnv$test_dir)
 }
