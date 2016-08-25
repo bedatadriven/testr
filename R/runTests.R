@@ -145,7 +145,8 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
                               "^[[:space:]]*\\?", "^[[:space:]]*help\\.search",
                               "^[[:space:]]*nameEx.{2}help\\.search", "demo\\(",
                               "data\\(package", "data\\(\\)",
-                              "^library\\(\\)", "^library\\(lib\\.loc"
+                              "^library\\(\\)", "^library\\(lib\\.loc",
+                              "^file\\.show\\("
                 )
 
                 for (pattern in patterns) {
