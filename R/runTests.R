@@ -25,6 +25,8 @@ remove_failing_tcs <- function()
 #' @title find_packages_using_function
 #' @description find packages that use the function of interest
 #' @param functionName name of the function
+#' @param limit max number of packages to use
+#' @param lib.loc library location
 #' @export
 find_packages_using_function <- function(functionName, limit = 100, lib.loc = NULL)
 {
@@ -63,6 +65,8 @@ find_packages_using_function <- function(functionName, limit = 100, lib.loc = NU
 #' @title runPackageTests
 #' @description ectract and run example/test codes from package
 #' @param pkg name of the packge
+#' @param lib.loc library location
+#' @param outDir output directory to store extracted code
 #' @export
 run_package_tests <- function (pkg, lib.loc = NULL, outDir)
 {
@@ -223,8 +227,10 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
 
 #' @title run_all_tests
 #' @description run all the test/example codes from all the selected packages
-#' @param outDir root dir
+#' @param outDir output dir
+#' @param errorsAreFatal should errors break the process
 #' @param scope how to prioritize/select packages to run
+#' @param srcdir source directory
 #' @param pkg_limit maximum number of packages to use for test generation
 #' @param custom_pkg_list custom list of packages of interest to use for test generation
 #' @export

@@ -9,9 +9,13 @@ run_all_tests(outDir = ".", errorsAreFatal = FALSE, scope = c("all",
   custom_pkg_list = NULL)
 }
 \arguments{
-\item{outDir}{root dir}
+\item{outDir}{output dir}
+
+\item{errorsAreFatal}{should errors break the process}
 
 \item{scope}{how to prioritize/select packages to run}
+
+\item{srcdir}{source directory}
 
 \item{pkg_limit}{maximum number of packages to use for test generation}
 

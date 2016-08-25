@@ -75,7 +75,6 @@ ensure_file <- function(name, funHash)
 #'
 #' @description This function parses file with closure capture information and generates test cases
 #' @param cap_file path to closure capture file
-#' @importFrom digest digest
 process_capture <- function(cap_file)
 {
   lines <- readLines(cap_file)
@@ -88,7 +87,7 @@ process_capture <- function(cap_file)
     func <- read_value(lines, kFuncPrefix)
     args <- read_value(lines, kArgsPrefix)
 
-    d_func_arg <- digest( paste0(digest(func), digest(args)) )
+    d_func_arg <- digest::digest( paste0(digest::digest(func), digest::digest(args)) )
 
     tc.file <- ensure_file(func, d_func_arg)
     feedback <- generate_tc(symb, vsym, func, args)

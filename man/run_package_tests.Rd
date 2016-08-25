@@ -8,6 +8,10 @@ run_package_tests(pkg, lib.loc = NULL, outDir)
 }
 \arguments{
 \item{pkg}{name of the packge}
+
+\item{lib.loc}{library location}
+
+\item{outDir}{output directory to store extracted code}
 }
 \description{
 ectract and run example/test codes from package

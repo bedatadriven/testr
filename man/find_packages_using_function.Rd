@@ -8,6 +8,10 @@ find_packages_using_function(functionName, limit = 100, lib.loc = NULL)
 }
 \arguments{
 \item{functionName}{name of the function}
+
+\item{limit}{max number of packages to use}
+
+\item{lib.loc}{library location}
 }
 \description{
 find packages that use the function of interest
