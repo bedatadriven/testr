@@ -297,7 +297,6 @@ run_all_tests <-
 #' @export
 get_tests <- function(capt_dir)
 {
-    print(capt_dir)
     d <- list.files(capt_dir, pattern = ".R$", recursive = TRUE,
                     full.names = TRUE)
     rm <- grep("^capture", list.files(capt_dir, recursive = TRUE))
