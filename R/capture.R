@@ -5,7 +5,6 @@
 #' @param func function name as a character string
 #' @param package name of package to look for function
 #' @param verbose if to print additional output
-#' @export
 #' @seealso write_capture
 #'
 decorate <- function(func, package, verbose) {
