@@ -52,10 +52,10 @@ findPackagesUsingFunction <- function(functionName, limit = 100, lib.loc = NULL)
         if(length(res) > 0) {
             resTab <- as.data.frame(unclass(rle(sort(res))))[ , 2:1]
             resTab <- resTab[with(resTab, order(-lengths)), ]
-            if (nrow(resTab < threshold))
+            if (nrow(resTab < limit))
                 top <- row.names(resTab)
             else
-                top <- row.names(resTab[1:threshold, ])
+                top <- row.names(resTab[1:limit, ])
         }
     }
     top
