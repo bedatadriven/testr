@@ -8,7 +8,8 @@
 #' @param output_dir directory where generated test cases will be saved
 #' @param timed whether result is dependent on time of generation
 #' @param verbose wheater display debug output
-test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("verbose")) {
+test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("verbose"))
+{
   if (verbose) {
     cat("Output:", output_dir, "\n")
     cat("Root:", root, "\n")
@@ -44,7 +45,8 @@ test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("ver
 #' @param name directory where generated test cases will be saved
 #' @param funHash hash of function name and function arguments
 #' @seealso test_gen
-ensure_file <- function(name, funHash) {
+ensure_file <- function(name, funHash)
+{
 
     fname <- gsub(.Platform$file.sep, "sep", name)
     # replace ::: with ___ so that we work on Windows too
@@ -74,7 +76,8 @@ ensure_file <- function(name, funHash) {
 #' @description This function parses file with closure capture information and generates test cases
 #' @param cap_file path to closure capture file
 #' @importFrom digest digest
-process_capture <- function(cap_file) {
+process_capture <- function(cap_file)
+{
   lines <- readLines(cap_file)
   cache$i <- 1
   while (cache$i < length(lines)) {
@@ -107,7 +110,8 @@ process_capture <- function(cap_file) {
 }
 
 
-read_symbol_values <- function(lines) {
+read_symbol_values <- function(lines)
+{
   k_sym <- 1
   k_value <- 1
   symb <- vector()
@@ -128,7 +132,8 @@ read_symbol_values <- function(lines) {
   return(list(symb, vsym))
 }
 
-read_value <- function(lines, prefix){
+read_value <- function(lines, prefix)
+{
   value <- vector()
   j <- cache$i
   while (starts_with(prefix, lines[j])){
@@ -147,7 +152,8 @@ read_value <- function(lines, prefix){
 #' @param func function name
 #' @param argv input arguments for a closure function call
 #' @seealso test_gen ProcessClosure
-generate_tc <- function(symb, vsym, func, argv) {
+generate_tc <- function(symb, vsym, func, argv)
+{
   # check validity of symbol values and construct part of the test
   invalid.symbols <- vector()
   variables <- ""
@@ -222,3 +228,22 @@ generate_tc <- function(symb, vsym, func, argv) {
     src <- paste(src, call)
     list(type = "src", msg = src);
 }
+
+
+#' @title writeCapturedTests
+#' @description creates an archive of generated test cases
+#' @param path path to store the archive
+#' @param test_path location of generated test cases
+#' @export
+writeCapturedTests <- function(path, test_path= testEnv$test_dir)
+{
+    tc <- removeFailingTCs()
+    if (length(tc)) {
+        if (!dir.exists(path))
+            dir.create(path)
+        zip_call <- paste0("tar -czvf ", path, "/test.", pkg_name,
+                           ".", fname, ".tar.gz -C ", test_path, " .")
+        system(zip_call)
+    }
+}
+

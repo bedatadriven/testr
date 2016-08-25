@@ -280,3 +280,72 @@ gen_from_source <- function(src.root, output_dir, ...) {
 }
 
 
+# setup environment
+testEnv <- new.env(parent = .GlobalEnv)
+testEnv$pkgname        <- c()
+testEnv$pkg_name        <- c()
+testEnv$fname           <- c()
+testEnv$job             <- c()
+testEnv$build           <- c()
+testEnv$pkg_limit       <- integer()
+testEnv$scope           <- c()
+testEnv$custom_pkg_list <- NA
+testEnv$root            <- c() # getwd()
+testEnv$testOutDir      <- c() # paste0(getwd(), "/", testEnv$job, "_", testEnv$build)
+testEnv$capt_dir        <- c() # file.path(testEnv$root,"capture")
+testEnv$arch_dir        <- c() # file.path(testEnv$root,"tests")
+testEnv$test_dir        <- c() # file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___", testEnv$fname))
+
+
+setExamedPkgName <- function(pkgname)
+{
+    testEnv$pkgname <- pkgname
+}
+setPkgName <- function(pkg_name)
+{
+    testEnv$pkg_name <- pkg_name
+}
+setFunctionName <- function(fname)
+{
+    testEnv$fname <- fname
+}
+setJob <- function(job)
+{
+    testEnv$job <- job
+}
+setBuild <- function(build)
+{
+    testEnv$build <- build
+}
+setPkgLimit <- function(limit)
+{
+    testEnv$pkg_limit <- limit
+}
+setScope <- function(scope = c("all"))
+{
+    testEnv$scope <- scope
+}
+setCustomPkgList <- function(pkgs)
+{
+    testEnv$custom_pkg_list <- pkgs
+}
+setRoot <- function(root)
+{
+    testEnv$root <- root
+}
+setTestOutDir <- function(test_out_dir)
+{
+    testEnv$testOutDir <- test_out_dir
+}
+setCaptDir <- function(capt_dir){
+    testEnv$capt_dir <- capt_dir
+}
+getCaptDir <- function(){
+    testEnv$capt_dir
+}
+setArchDir <- function(arch_dir){
+    testEnv$arch_dir <- arch_dir
+}
+setTestDir <- function(test_dir){
+    testEnv$test_dir <- test_dir
+}
