@@ -168,9 +168,9 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
                 if (commentDontrun) {
                     dont_run <- FALSE
                     for (line in lines) {
-                        if (any(grepl("^[[:space:]]*## No run:", line, perl = TRUE, useBytes = TRUE))) dont_test <- TRUE
+                        if (any(grepl("^[[:space:]]*## Not run:", line, perl = TRUE, useBytes = TRUE))) dont_test <- TRUE
                         if (!dont_test) cat(line, "\n", sep = "", file = out)
-                        if (any(grepl("^[[:space:]]*## End\\(No run\\)", line, perl = TRUE, useBytes = TRUE))) dont_test <- FALSE
+                        if (any(grepl("^[[:space:]]*## End\\(Not run\\)", line, perl = TRUE, useBytes = TRUE))) dont_test <- FALSE
                     }
                 }
                 else for (line in lines) {
