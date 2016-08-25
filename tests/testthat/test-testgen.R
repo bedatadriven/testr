@@ -3,6 +3,25 @@ library(testthat)
 
 context("Generation")
 
+test_that('Test write_captured_tests()', {
+    testr::start_capture("stats::dpois")
+    dpois(0:7, lambda = 1)
+    testr::write_captured_tests("/tmp")
+    expect_true(file.exists("tmp"))
+    expect_true(file.info("tmp")$isdir)
+    expect_true(file.exists("capture/stats___dpois"))
+    expect_true(file.info("capture/stats___dpois")$isdir)
+    expect_true(file.exists("capture"))
+    expect_true(file.info("capture")$isdir)
+    expect_true(file.exists("tmp/test.stats.dpois.tar.gz"))
+    expect_false(file.info("tmp/test.stats.dpois.tar.gz")$isdir)
+    expect_equal(length(list.files("tmp",recursive = TRUE)), 1)
+    expect_equal(length(list.files("capture/stats__dpois",recursive = TRUE)), 1)
+    unlink("tmp")
+    unlink("capture")
+})
+
+
 test_that('Generate Abbreviate', {
     expect_warning(generate("abbreviate", "CaptureInfo/capture"))
     generate("abbreviate", "CaptureInfo/capture_abbreviate", verbose = FALSE)
@@ -32,3 +51,4 @@ test_that('Generate Warnings/Errors', {
     sink()
     unlink("we", recursive = T)
 })
+
