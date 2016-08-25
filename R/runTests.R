@@ -26,15 +26,16 @@ remove_failing_tcs <- function()
 #' @description find packages that use the function of interest
 #' @param functionName name of the function
 #' @param limit max number of packages to use
-#' @param lib.loc library location
 #' @export
-find_packages_using_function <- function(functionName, limit = 100, lib.loc = NULL)
+find_packages_using_function <- function(functionName, limit = 100)
 {
     top <- c(character())
-    if(missing(lib.loc))
-        lib.loc <- .libPaths()[1]
-    call <- paste0("egrep -R -n \'\\<",functionName,"\\>\' ",lib.loc)
-    res <- system(call, intern = TRUE)
+    res <- c()
+    for (path in .libPaths()) {
+        call <- paste0("egrep -R -n \'\\<",functionName,"\\>\' ",path)
+        res <- c(res, system(call, intern = TRUE) )
+    }
+
     # remove line that dont start with library path
     if(length(res)) {
         for (path in .libPaths()) {
@@ -101,7 +102,7 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
         nof <- length(Sys.glob(file.path(filedir, "*.R")))
         if (!nof)
             return(invisible(NULL))
-        massageExamples <- function (pkg, files, outFile = stdout(), ..., commentDonttest = TRUE)
+        massageExamples <- function (pkg, files, outFile = stdout(), ..., commentDonttest = TRUE, commentDontrun = TRUE)
         {
             if (dir.exists(files[1L])) {
                 old <- Sys.setlocale("LC_COLLATE", "C")
@@ -164,6 +165,14 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
                         if (any(grepl("^[[:space:]]*## No test:", line, perl = TRUE, useBytes = TRUE))) dont_test <- TRUE
                         if (!dont_test) cat(line, "\n", sep = "", file = out)
                         if (any(grepl("^[[:space:]]*## End\\(No test\\)", line, perl = TRUE, useBytes = TRUE))) dont_test <- FALSE
+                    }
+                }
+                if (commentDontrun) {
+                    dont_run <- FALSE
+                    for (line in lines) {
+                        if (any(grepl("^[[:space:]]*## No run:", line, perl = TRUE, useBytes = TRUE))) dont_test <- TRUE
+                        if (!dont_test) cat(line, "\n", sep = "", file = out)
+                        if (any(grepl("^[[:space:]]*## End\\(No run\\)", line, perl = TRUE, useBytes = TRUE))) dont_test <- FALSE
                     }
                 }
                 else for (line in lines) {
@@ -259,7 +268,7 @@ run_all_tests <-
             pkgs <- c(
                 do.call(
                     find_packages_using_function,
-                    list(functionName = testEnv$fname, limit = testEnv$pkg_limit, lib.loc = NULL),
+                    list(functionName = testEnv$fname, limit = testEnv$pkg_limit),
                     envir = testEnv),
                 pkgs)
         if (!is.na(custom_pkg_list)) {
@@ -334,7 +343,6 @@ generateTestCases <- function(){
         install_git("https://github.com/bedatadriven/hamcrest.git",
                     branch = "master", upgrade_dependencies = FALSE)
     }
-
     set_test_out_dir(paste0(testEnv$root, "/", testEnv$job, "_", testEnv$build))
     dir.create(testEnv$testOutDir, recursive = TRUE)
     start_capture( paste(testEnv$pkg_name, "::", testEnv$fname, sep = ""),
@@ -355,5 +363,5 @@ generateTestCases <- function(){
     set_test_dir(file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___",
                                                        testEnv$fname)))
 
-    write_captured_tests(testEnv$arch_dir, testEnv$test_dir)
+    write_captured_tests(testEnv$arch_dir)
 }
