@@ -88,7 +88,7 @@ process_capture <- function(cap_file)
     func <- read_value(lines, kFuncPrefix)
     args <- read_value(lines, kArgsPrefix)
 
-    d_func_arg <- digest( paste0(digestdigest(func), digest(args)) )
+    d_func_arg <- digest( paste0(digest(func), digest(args)) )
 
     tc.file <- ensure_file(func, d_func_arg)
     feedback <- generate_tc(symb, vsym, func, args)
