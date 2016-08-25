@@ -1,7 +1,7 @@
 testR - test case generation for R
 =====
 
-[![Build Status](http://build.renjin.org/buildStatus/icon?job=testr)](http://build.renjin.org) 
+[![Build Status](http://build.renjin.org/job/Test-Generation/job/testr/badge/icon)](http://build.renjin.org/job/Test-Generation/job/testr/)
 
 TestR is a framework for unit tests generation from source code and for test execution, and filtering of test cases based on C code coverage using `gcov` and R code coverage using `rcov` (https://github.com/allr/rcov).
 
