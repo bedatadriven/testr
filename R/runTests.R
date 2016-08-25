@@ -28,7 +28,6 @@ remove_failing_tcs <- function()
 #' @export
 find_packages_using_function <- function(functionName, limit = 100, lib.loc = NULL)
 {
-    require(stringr)
     top <- c()
     if(missing(lib.loc))
         lib.loc <- .libPaths()[1]
