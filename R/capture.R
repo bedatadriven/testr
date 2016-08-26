@@ -48,13 +48,15 @@ decorate <- function(func, package, verbose)
         return(invisible())
     }
     write.call <- call("write_capture", if (is.na(package)) func else paste(package, func, sep = ":::"), quote(sys.frame(-4))) #nolint
+    write.call[[1]] <- testr::write_capture
     tc <- call("trace",
                func,
                quote(write.call),
                print = testr_options("verbose"))
     hidden <- FALSE
     if (!func %in% ls(as.environment(if (is.na(package)) .GlobalEnv else paste("package", package, sep = ":")))) {
-        tc[["where"]] <- call("getNamespace", package)
+        if (!is.na(package))
+            tc[["where"]] <- call("getNamespace", package)
         hidden <- TRUE
     }
     if (verbose) {
