@@ -6,7 +6,7 @@
 #' @param output_dir directory where generated test cases will be saved
 #' @param timed whether result is dependent on time of generation
 #' @param verbose wheater display debug output
-test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("verbose"))
+test_gen <- function(root, output_dir, timed = FALSE, verbose = testr_options("verbose"))
 {
   if (verbose) {
     cat("Output:", output_dir, "\n")
@@ -18,18 +18,21 @@ test_gen <- function(root, output_dir, timed = FALSE, verbose=testr_options("ver
     return(invisible())
   }
   if (file.info(root)$isdir) {
-    all.capture <- lapply(list.files(root, recursive=TRUE, all.files = TRUE), function(x) file.path(root,x))
+    all.capture <- lapply(list.files(root, recursive=TRUE, all.files = TRUE),
+                          function(x) file.path(root,x))
   } else {
     all.capture <- root
   }
   # output dir checks
   if (missing(output_dir)) stop("A output directory must be provided!");
   if (!file.exists(output_dir) || !file.info(output_dir)$isdir) dir.create(output_dir)
-  if (timed) output_dir <- file.path(output_dir, format(Sys.time(), "%Y-%m-%d %H:%M:%S"))
+  if (timed) output_dir <- file.path(output_dir, format(Sys.time(),
+                                                        "%Y-%m-%d %H:%M:%S"))
   cache$output_dir <- output_dir
   # bad.arguments file to store incorrect arguments
   cache$bad_argv <- file.path(cache$output_dir, "bad_arguments");
-  if (!file.exists(cache$bad_argv) && !file.create(cache$bad_argv)) stop("Unable to create file: ", cache$bad_argv)
+  if (!file.exists(cache$bad_argv) && !file.create(cache$bad_argv))
+      stop("Unable to create file: ", cache$bad_argv)
   cache$tid <- list()
   Map(function(x) { process_capture(x) }, all.capture)
   cache$tid <- NULL
@@ -55,8 +58,11 @@ ensure_file <- function(name, funHash)
     dir.create(tc.folder, showWarnings = FALSE)
 
     # get the index of the file, based on number of files in the folder (but use the cache information for it)
-    cache$tid[[name]] <- ifelse(is.null(cache$tid[[name]]), 0, cache$tid[[name]] + 1)
-    tc.file = file.path(tc.folder, paste("test.", gsub("___", ".", fname), ".", funHash, ".R", sep = ""), fsep = .Platform$file.sep)
+    cache$tid[[name]] <- ifelse(is.null(cache$tid[[name]]), 0,
+                                cache$tid[[name]] + 1)
+    tc.file = file.path(tc.folder, paste("test.", gsub("___", ".", fname), ".",
+                                         funHash, ".R", sep = ""),
+                        fsep = .Platform$file.sep)
 
     # TODO perhaps this is not needed for testthat
     if (!file.exists(tc.file)) {

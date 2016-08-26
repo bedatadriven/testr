@@ -109,11 +109,9 @@ run_all_tests <-
 {
         ow <- options(warn = 1); on.exit(ow); scope <- match.arg(scope);
         status <- 0L; pkgs <- character();
-
         known_packages <- tools:::.get_standard_package_names()
         all_avail_packages <- names(installed.packages()[ ,1])
         avail_packages <- all_avail_packages[!is.element(all_avail_packages, c(known_packages$base, known_packages$recommended))]
-
         pkgs <- c(character(0))
 
         if (scope %in% c("all", "base"))
@@ -130,31 +128,28 @@ run_all_tests <-
                     envir = testEnv),
                 pkgs)
         if (!is.na(custom_pkg_list)) {
-            pkgs <- c( custom_pkg_list[ is.element(custom_pkg_list, all_avail_packages) ], pkgs )
+            pkgs <- c( custom_pkg_list[ is.element(custom_pkg_list,
+                                                   all_avail_packages) ], pkgs )
         }
         if (pkg_limit > 0)
             pkgs <- pkgs[ 1:pkg_limit ]
-
         pkgs <- pkgs[ !duplicated(pkgs) ]
-
         # Sometimes last value is NA
         pkgs <- pkgs[!is.na(pkgs)]
         pkgs <- pkgs[!pkgs == "NA"]
 
         if (scope %in% c("top") && length(pkgs) < pkg_limit ) {
-            pkgs <- c(known_packages$base, known_packages$recommended, avail_packages)
+            pkgs <- c(known_packages$base, known_packages$recommended,
+                      avail_packages)
             pkgs <- pkgs[ !duplicated(pkgs) ]
             pkgs <- pkgs[1:pkg_limit]
         }
-
         if(length(pkgs)) {
             print("Selected packages:")
             print(pkgs)
             for (pkg in pkgs) {
                 print(paste0("############ START PACKAGE: ", pkg, " #######"))
-
                 tryCatch(run_package_tests(pkg, .Library, outDir), error = function(e) print(e) )
-
                 print(paste0("############ DONE WITH PACKAGE: ", pkg, " #######"))
             }
         } else {

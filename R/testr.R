@@ -73,11 +73,13 @@ gen_from_function <- function(package.dir = ".", code, functions, filter = TRUE,
     if (filter) {
         if (verbose)
             cat("Pruning tests - this may take some time...\n")
-        filter_tests(output, file.path(package$path, "tests/testthat"), functions, package.dir, compact = TRUE, verbose = verbose)
+        filter_tests(output, file.path(package$path, "tests/testthat"),
+                     functions, package.dir, compact = TRUE, verbose = verbose)
     }
     # clear the temp folder, if we used a temp folder implicitly
     if (cleanup) unlink(output, recursive = T)
-    detach(paste("package", package$package, sep=":"), unload = TRUE, character.only = TRUE)
+    detach(paste("package", package$package, sep=":"), unload = TRUE,
+           character.only = TRUE)
 }
 
 #' Generates tests for a package by running the code associated with it.
@@ -99,7 +101,8 @@ gen_from_package <- function(package.dir = ".", include.tests = FALSE,
 {
     package = devtools::as.package(package.dir)
     devtools::document(package.dir)
-    detach(paste("package", package$package, sep=":"), unload = TRUE, character.only = TRUE)
+    detach(paste("package", package$package, sep=":"), unload = TRUE,
+           character.only = TRUE)
     f <- function() {
         # run package vignettes
         info <- tools::getVignetteInfo(package = package$package)
@@ -113,7 +116,8 @@ gen_from_package <- function(package.dir = ".", include.tests = FALSE,
         manPath <- file.path(package.dir, "man")
         examples <- list.files(manPath, pattern = "\\.[Rr]d$", no.. = TRUE)
         if (length(examples) != 0) {
-            if (verbose) cat(paste("Running examples (", length(examples), "man files)\n"))
+            if (verbose)
+                cat(paste("Running examples (", length(examples), "man files)\n"))
             for (f in examples) {
                 code <- example_code(file.path(manPath, f))
                 tryCatch(eval(parse(text = code)), error = function(x) print(x))
@@ -122,13 +126,18 @@ gen_from_package <- function(package.dir = ".", include.tests = FALSE,
         # run tests
         if (include.tests) {
             if (verbose) cat("Running package tests\n")
-            testthat::test_dir(file.path(package.dir, "tests", "testthat"), filter = NULL)
+            testthat::test_dir(file.path(package.dir, "tests", "testthat"),
+                               filter = NULL)
         }
     }
     if (missing(output))
-        gen_from_function(package.dir, code = f , filter = filter, exclude_existing_tests = include.tests, build = build, timed = timed, verbose = verbose)
+        gen_from_function(package.dir, code = f , filter = filter,
+                          exclude_existing_tests = include.tests, build = build,
+                          timed = timed, verbose = verbose)
     else
-        gen_from_function(package.dir, code = f , filter = filter, exclude_existing_tests = include.tests, build = build, timed = timed, output, verbose = verbose)
+        gen_from_function(package.dir, code = f , filter = filter,
+                          exclude_existing_tests = include.tests, build = build,
+                          timed = timed, output, verbose = verbose)
 }
 
 #' Enables capturing of the specified functions.
@@ -244,7 +253,9 @@ prune <- function(test_root, output_dir, ...,
     fn <- sapply(functions, `[`, 1)
     functions <- sapply(functions, `[`, 2)
     names(functions) <- fn
-    filter_tests(test_root, output_dir, functions, package_path, remove_tests = remove_tests, compact = compact, verbose = verbose)
+    filter_tests(test_root, output_dir, functions, package_path,
+                 remove_tests = remove_tests, compact = compact,
+                 verbose = verbose)
     invisible(NULL)
 }
 
@@ -282,7 +293,8 @@ gen_from_source <- function(src.root, output_dir, ...)
         stop("Supplied source does not exist")
     }
     if (file.info(src.root)$isdir) {
-        src.root <- list.files(src.root, pattern = "\\[rR]", recursive = TRUE, full.names = TRUE)
+        src.root <- list.files(src.root, pattern = "\\[rR]",
+                               recursive = TRUE, full.names = TRUE)
     }
     start_capture(...)
     for (src.file in src.root) {
