@@ -4,7 +4,7 @@
 \alias{run_package_tests}
 \title{runPackageTests}
 \usage{
-run_package_tests(pkg, lib.loc = NULL, outDir)
+run_package_tests(pkg, lib.loc = NULL, outDir, verbose = TRUE)
 }
 \arguments{
 \item{pkg}{name of the packge}
