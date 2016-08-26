@@ -69,167 +69,27 @@ find_packages_using_function <- function(functionName, limit = 100)
 #' @param lib.loc library location
 #' @param outDir output directory to store extracted code
 #' @export
-run_package_tests <- function (pkg, lib.loc = NULL, outDir)
+run_package_tests <- function (pkg, lib.loc = NULL, outDir, verbose = TRUE)
 {
-    pkgdir <- find.package(pkg)
-    owd1    <- setwd(outDir)
-    # on.exit(setwd(owd1))
-
-    .createExdotR <- function (pkg, pkgdir, silent = FALSE, use_gct = FALSE, addTiming = FALSE, ..., commentDontrun = TRUE, commentDonttest = TRUE)
-    {
-        Rfile <- paste0(pkg, "-Ex.R")
-        db <- tools::Rd_db(basename(pkgdir), lib.loc = dirname(pkgdir))
-        if (!length(db)) {
-            message("no parsed files found")
-            return(invisible(NULL))
-        }
-        files <- names(db)
-        if (pkg == "grDevices")
-            files <- files[!grepl("^(unix|windows)/", files)]
-        filedir <- tempfile()
-        dir.create(filedir)
-        on.exit(unlink(filedir, recursive = TRUE))
-        cnt <- 0L
-        for (f in files) {
-            nm <- sub("\\.[Rr]d$", "", basename(f))
-            tools::Rd2ex(db[[f]], file.path(filedir, paste(nm, "R", sep = ".")),
-                         defines = NULL, commentDontrun = commentDontrun,
-                         commentDonttest = commentDonttest)
-            cnt <- cnt + 1L
-            if (!silent && cnt%%10L == 0L)
-                message(".", appendLF = FALSE, domain = NA)
-        }
-        nof <- length(Sys.glob(file.path(filedir, "*.R")))
-        if (!nof)
-            return(invisible(NULL))
-        massageExamples <- function (pkg, files, outFile = stdout(), ..., commentDonttest = TRUE, commentDontrun = TRUE)
-        {
-            if (dir.exists(files[1L])) {
-                old <- Sys.setlocale("LC_COLLATE", "C")
-                files <- sort(Sys.glob(file.path(files, "*.R")))
-                Sys.setlocale("LC_COLLATE", old)
-            }
-            if (is.character(outFile)) {
-                out <- file(outFile, "wt")
-                on.exit(close(out))
-            }
-            else {
-                out <- outFile
-            }
-
-            lines <- c(
-                paste0("pkgname <- \"", pkg, "\""),
-                "assign(\"par.postscript\", graphics::par(no.readonly = TRUE))",
-                "options(contrasts = c(unordered = \"contr.treatment\", ordered = \"contr.poly\"))",
-                "graphics.off()"
-            )
-            cat(lines, sep = "\n", file = out)
-            if (pkg == "tcltk") {
-                if (capabilities("tcltk"))
-                    cat("require('tcltk')\n", file = out)
-                else
-                    cat("stop(\"tcltk not found!\")\n", file = out)
-            }
-            else if (pkg != "base")
-                cat("library('", pkg, "')\n", sep = "", file = out)
-
-            for (file in files) {
-                nm <- sub("\\.R$", "", basename(file))
-                nm <- gsub("[^- .a-zA-Z0-9_]", ".", nm, perl = TRUE, useBytes = TRUE)
-                if (pkg == "grDevices" && nm == "postscript") next
-                if (pkg == "graphics" && nm == "text") next
-                if (!file.exists(file)) stop("file ", file, " cannot be opened", domain = NA)
-                lines <- readLines(file)
-
-                patterns <- c("^[[:space:]]*#", "^[[:space:]]*help\\(",
-                              "^[[:space:]]*\\?", "^[[:space:]]*help\\.search",
-                              "^[[:space:]]*nameEx.{2}help\\.search", "demo\\(",
-                              "data\\(package", "data\\(\\)",
-                              "^library\\(\\)", "^library\\(lib\\.loc",
-                              "^file\\.show\\("
-                )
-
-                for (pattern in patterns) {
-                    com <- grep(pattern, lines, perl = TRUE, useBytes = TRUE)
-                    if (length(com))
-                        lines <- lines[-com]
-                }
-
-                have_par <- any(grepl("[^a-zA-Z0-9.]par\\(|^par\\(", lines, perl = TRUE, useBytes = TRUE))
-                have_contrasts <- any(grepl("options\\(contrasts", lines, perl = TRUE, useBytes = TRUE))
-                cat("### * ", nm, "\n\n", sep = "", file = out)
-                if (commentDonttest) {
-                    dont_test <- FALSE
-                    for (line in lines) {
-                        if (any(grepl("^[[:space:]]*## No test:", line, perl = TRUE, useBytes = TRUE))) dont_test <- TRUE
-                        if (!dont_test) cat(line, "\n", sep = "", file = out)
-                        if (any(grepl("^[[:space:]]*## End\\(No test\\)", line, perl = TRUE, useBytes = TRUE))) dont_test <- FALSE
-                    }
-                }
-                if (commentDontrun) {
-                    dont_run <- FALSE
-                    for (line in lines) {
-                        if (any(grepl("^[[:space:]]*## Not run:", line, perl = TRUE, useBytes = TRUE))) dont_test <- TRUE
-                        if (!dont_test) cat(line, "\n", sep = "", file = out)
-                        if (any(grepl("^[[:space:]]*## End\\(Not run\\)", line, perl = TRUE, useBytes = TRUE))) dont_test <- FALSE
-                    }
-                }
-                else for (line in lines) {
-                    if (!(line = "")) {
-                        cat(line, "\n", sep = "", file = out)
-                    }
-                }
-                if (have_par) cat("graphics::par(get(\"par.postscript\"))\n", file = out)
-                if (have_contrasts) cat("base::options(contrasts = c(unordered = \"contr.treatment\",", "ordered = \"contr.poly\"))\n", sep = "", file = out)
-            }
-            cat("###### FOOTER ######\n", file = out)
-            cat("options(digits = 7L)\n", file = out)
-            cat("grDevices::dev.off()\n", file = out)
-        }
-
-        massageExamples(pkg, filedir, Rfile, commentDonttest = commentDonttest, ...)
-        invisible(Rfile)
+    info <- tools::getVignetteInfo(package = pkg)
+    vdir <- info[ ,2]
+    vfiles <- info[ ,6]
+    p <- file.path(vdir, "doc", vfiles)
+    if (verbose) cat(paste("Running vignettes (", length(vfiles), "files)\n"))
+    # vignettes are not expected to be runnable, silence errors
+    invisible( tryCatch( sapply(p, source), error = function(x) invisible() ) )
+    # run package examples
+    package.dir <- find.package(pkg)
+    manPath <- file.path(package.dir, "man")
+    examples <- list.files(manPath, pattern = "\\.[Rr]d$", no.. = TRUE)
+    if (verbose) cat(paste("Running examples (", length(examples), "man files)\n"))
+    for (f in examples) {
+        code <- example_code(file.path(manPath, f))
+        tryCatch(eval(parse(text = code)), error = function(x) print(x))
     }
-
-    message(gettextf("Testing examples for package %s", sQuote(pkg)),
-            domain = NA)
-    Rfile <- .createExdotR(pkg, pkgdir, silent = TRUE)
-    if (length(Rfile)) {
-        for (file in Rfile) {
-            print(paste0("@@@@@@@@@@ START EXAMPLE: ", file, " @@@@@@@@@@"))
-            oldGlobals <- c(ls(.GlobalEnv), "testEnv")
-            tryCatch( source(file, echo = FALSE, local = .GlobalEnv), error = function(e) print(e) )
-            allGlobals <- ls(.GlobalEnv)
-            allGlobals <- allGlobals[!is.element(allGlobals, oldGlobals)]
-            rm(list = allGlobals, envir = .GlobalEnv)
-            print(paste0("@@@@@@@@@@ DONE WITH EXAMPLE: ", file, " @@@@@@@@@@"))
-        }
-    } else {
-        warning(gettextf("no examples found for package %s", sQuote(pkg)), call. = FALSE, domain = NA)
-    }
-
-    d <- file.path(pkgdir, "tests")
-    this <- paste(pkg, "tests", sep = "-")
-    unlink(this, recursive = TRUE)
-    dir.create(this)
-    file.copy(Sys.glob(file.path(d, "*")), this, recursive = TRUE)
-    owd2 <- setwd(".")
-    setwd(this)
-    on.exit(setwd(owd2))
-    message(gettextf("Running specific tests for package %s", sQuote(pkg)), domain = NA)
-    Rfiles <- dir(".", pattern = "\\.R$")
-    if (length(Rfiles)) {
-        for (file in Rfiles) {
-            print(paste0("&&&&&&& START TEST: ", file, " &&&&&&&"))
-            oldGlobals <- c(ls(.GlobalEnv), "testEnv")
-            tryCatch( source(file, echo = FALSE, local = .GlobalEnv), error = function(e) print(e) )
-            allGlobals <- ls(.GlobalEnv)
-            allGlobals <- allGlobals[!is.element(allGlobals, oldGlobals)]
-            rm(list = allGlobals, envir = .GlobalEnv)
-            print(paste0("&&&&&&& DONE WITH TEST: ", file, " &&&&&&&"))
-        }
-    }
-    invisible(0L)
+    # run tests
+    if (verbose) cat("Running package tests\n")
+    testthat::test_dir(file.path(package.dir, "tests", "testthat"), filter = NULL)
 }
 
 #' run_all_tests
