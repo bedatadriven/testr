@@ -1,5 +1,5 @@
 
-#' @title remove_failing_tcs
+#' remove_failing_tcs
 #' @description removes the test cases that fail in GNU R
 #' @export
 remove_failing_tcs <- function()
@@ -22,7 +22,7 @@ remove_failing_tcs <- function()
     get_tests(capt_dir)
 }
 
-#' @title find_packages_using_function
+#' find_packages_using_function
 #' @description find packages that use the function of interest
 #' @param functionName name of the function
 #' @param limit max number of packages to use
@@ -63,7 +63,7 @@ find_packages_using_function <- function(functionName, limit = 100)
     top
 }
 
-#' @title runPackageTests
+#' runPackageTests
 #' @description ectract and run example/test codes from package
 #' @param pkg name of the packge
 #' @param lib.loc library location
@@ -232,8 +232,7 @@ run_package_tests <- function (pkg, lib.loc = NULL, outDir)
     invisible(0L)
 }
 
-
-#' @title run_all_tests
+#' run_all_tests
 #' @description run all the test/example codes from all the selected packages
 #' @param outDir output dir
 #' @param errorsAreFatal should errors break the process
@@ -247,7 +246,7 @@ run_all_tests <-
               scope = c("all", "base", "recommended", "top"),
               srcdir = NULL, pkg_limit = NULL,
               custom_pkg_list = NULL)
-    {
+{
         ow <- options(warn = 1); on.exit(ow); scope <- match.arg(scope);
         status <- 0L; pkgs <- character();
 
@@ -304,7 +303,7 @@ run_all_tests <-
         invisible(status)
     }
 
-#' @title get_tests
+#' get_tests
 #' @description get the names of all generated test cases
 #' @param capt_dir location of test cases
 #' @export
@@ -318,11 +317,12 @@ get_tests <- function(capt_dir)
     d
 }
 
-#' @title generate_test_cases
+#' generate_test_cases
 #' @description generates test cases based on environmental variables
 #' @import devtools methods
 #' @export
-generate_test_cases <- function(){
+generate_test_cases <- function()
+{
     set_function_name(Sys.getenv("function_name"))
     set_pkg_name(Sys.getenv("package_name"))
     set_job(Sys.getenv("JOB_NAME"))

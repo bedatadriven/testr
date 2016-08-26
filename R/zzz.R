@@ -13,14 +13,13 @@ kFuncPrefix <- "func: "
 kArgsPrefix <- "argv: "
 
 blacklist <- c(".GlobalEnv", ".Internal", ".Primitive", "substitute",
-               ".Machine", "on.exit",
-               "withCallingHandlers", "quote",
-               "c", "NextMethod", "UseMethod", "standardGeneric", "identity","missing",
-               "sys.call", "withVisible", "findRestarts", "local", "withRestarts", "formals",
-               ".C", ".Call", ".External", ".External.graphics", ".External2", ".Fortran", ".Call.graphics",
-               "length", "as.environment",
-               "length<-", "call", "switch", "nargs", "as.numeric", "library.dynam.unload",
-               "suppressMessages",
+               ".Machine", "on.exit", "withCallingHandlers", "quote",
+               "c", "NextMethod", "UseMethod", "standardGeneric", "identity",
+               "sys.call", "withVisible", "findRestarts", "local", ".Fortran",
+               ".C", ".Call", ".External", ".External.graphics", ".External2",
+               "length", "as.environment", "missing", "library.dynam.unload",
+               "length<-", "call", "switch", "nargs", "as.numeric",
+               "suppressMessages", "withRestarts", "formals", ".Call.graphics",
                # errors with trace
                "match.call", ".doTrace", "tracingState", "traceback", "trace", "get0",
                "forceAndCall", # added in R.3.2.1
@@ -44,7 +43,8 @@ operators <- c("(", ":", "%sep%", "[", "[[", "$", "@", "=", "[<-",
 
 primitive_generics_fails <- c(.S3PrimitiveGenerics, "round", "min", "max", "expression", "attr")
 
-.onLoad <- function(libname, pkgname) {
+.onLoad <- function(libname, pkgname)
+{
     # make sure temp_dir is empty
     cache$temp_dir <- tempdir()
     clean_temp()
@@ -63,7 +63,8 @@ primitive_generics_fails <- c(.S3PrimitiveGenerics, "round", "min", "max", "expr
         "parallel_tests"=TRUE,
         "rtests"=FALSE,
         "rprofile"='
-.First <- function() {
+.First <- function()
+{
         library(testr)
         library(utils)
         builtin_capture()
@@ -84,7 +85,8 @@ primitive_generics_fails <- c(.S3PrimitiveGenerics, "round", "min", "max", "expr
 #' @param value value to assign (optional)
 #' @export
 #'
-testr_options <- function(o, value) {
+testr_options <- function(o, value)
+{
     res <- getOption("testr")
     if (missing(value)) {
         ## just querying
@@ -109,3 +111,20 @@ testr_options <- function(o, value) {
         options("testr" = res)
     }
 }
+
+
+# setup environment
+testEnv <- new.env(parent = .GlobalEnv)
+testEnv$pkgname        <- c()
+testEnv$pkg_name        <- c()
+testEnv$fname           <- c()
+testEnv$job             <- c()
+testEnv$build           <- c()
+testEnv$pkg_limit       <- integer()
+testEnv$scope           <- c()
+testEnv$custom_pkg_list <- NA
+testEnv$root            <- c() # getwd()
+testEnv$testOutDir      <- c() # paste0(getwd(), "/", testEnv$job, "_", testEnv$build)
+testEnv$capt_dir        <- c() # file.path(testEnv$root,"capture")
+testEnv$arch_dir        <- c() # file.path(testEnv$root,"tests")
+testEnv$test_dir        <- c() # file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___", testEnv$fname))
