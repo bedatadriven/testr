@@ -212,5 +212,5 @@ generate_test_cases <- function()
     set_arch_dir(file.path(testEnv$root,"tests"))
     set_test_dir(file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___",
                                                        testEnv$fname)))
-    write_captured_tests(testEnv$arch_dir)
+    write_captured_tests("tests")
 }
