@@ -67,7 +67,7 @@ run_package_source <- function(pkg, flist, source, output.dir) {
 #'
 validate_tests <- function(capture.dir) {
 
-    cat(sprintf("  Validating tests... ", pkg))
+    cat(sprintf("  Validating tests... "))
 
     test.files <- list.files("R6/captured/base___gsub/", pattern=".+\\.R", full.names = TRUE)
 
