@@ -111,20 +111,3 @@ testr_options <- function(o, value)
         options("testr" = res)
     }
 }
-
-
-# setup environment
-testEnv <- new.env(parent = .GlobalEnv)
-testEnv$pkgname        <- c()
-testEnv$pkg_name        <- c()
-testEnv$fname           <- c()
-testEnv$job             <- c()
-testEnv$build           <- c()
-testEnv$pkg_limit       <- integer()
-testEnv$scope           <- c()
-testEnv$custom_pkg_list <- NA
-testEnv$root            <- c() # getwd()
-testEnv$testOutDir      <- c() # paste0(getwd(), "/", testEnv$job, "_", testEnv$build)
-testEnv$capt_dir        <- c() # file.path(testEnv$root,"capture")
-testEnv$arch_dir        <- c() # file.path(testEnv$root,"tests")
-testEnv$test_dir        <- c() # file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___", testEnv$fname))

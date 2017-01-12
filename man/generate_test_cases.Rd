@@ -4,9 +4,13 @@
 \alias{generate_test_cases}
 \title{generate_test_cases}
 \usage{
-generate_test_cases()
+generate_test_cases(functions)
 }
 \description{
 generates test cases based on environmental variables
+}
+\details{
+Systematically generates test cases for a given base function by running as many package
+examples and tests as possible to capture inputs and outputs of functions.
 }
 

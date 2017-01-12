@@ -1,162 +1,90 @@
 
-#' remove_failing_tcs
-#' @description removes the test cases that fail in GNU R
-#' @export
-remove_failing_tcs <- function()
-{
-    ## check if generated test cases run without failure
-    # get the generated test cases
-    capt_dir <- get_capt_dir()
-    tc <- get_tests(capt_dir)
-    # check which test cases fail?
-    res <- sapply(tc, function(x) {
-        oldGlobals <- c(ls(.GlobalEnv), "testEnv")
-        z = try(source(x, local = .GlobalEnv))
-        allGlobals <- ls(.GlobalEnv)
-        allGlobals <- allGlobals[!is.element(allGlobals, oldGlobals)]
-        rm(list = allGlobals, envir = .GlobalEnv)
-        inherits(z, "try-error")
-    })
-    # remove failing test cases
-    unlink(names(res[res == TRUE]))
-    get_tests(capt_dir)
-}
 
-#' find_packages_using_function
-#' @description find packages that use the function of interest
-#' @param functionName name of the function
-#' @param limit max number of packages to use
-#' @export
-find_packages_using_function <- function(functionName, limit = 100)
-{
-    top <- c(character())
-    res <- c()
-    for (path in .libPaths()) {
-        call <- paste0("egrep -R -n \'\\<",functionName,"\\>\' ",path)
-        res <- c(res, system(call, intern = TRUE) )
-    }
+#' Runs all available source code from a package in order to generate
+#' usable tests.
+#'
+#' @param pkg the name of the package (must be installed)
+#' @param flist list of functions to instrument for capture
+#' @param output.dir directory to write all harnes scripts, tests, and generated content.
+run_package <- function(pkg, flist, output.dir = getwd()) {
 
-    # remove line that dont start with library path
-    if(length(res)) {
-        for (path in .libPaths()) {
-            keep <- grepl(path, res)
-            res2 <- res[keep]
-            # remove library path
-            res2 <- sapply(res2, function(x) {
-                strsplit(x[[1]], path)[[1]][2]},
-                simplify = TRUE, USE.NAMES = FALSE)
-            # select package name from path
-            res2 <- sapply(res2, function(x) {
-                strsplit(x[[1]], "/")[[1]][2]},
-                simplify = TRUE, USE.NAMES = FALSE)
-            # make a count table from package name occurence
-            if(length(res2) > 0) {
-                resTab <- as.data.frame(unclass(rle(sort(res2))))[ , 2:1]
-                resTab <- resTab[with(resTab, order(-lengths)), ]
-                if (nrow(resTab) < limit)
-                    top <- c(top, as.character(resTab$values))
-                else
-                    top <- c(top, as.character(resTab$values[1:limit]))
-            }
-        }
-    }
-    top
-}
+    cat(sprintf("Package %s:\n", pkg))
 
-#' runPackageTests
-#' @description ectract and run example/test codes from package
-#' @param pkg name of the packge
-#' @param lib.loc library location
-#' @param outDir output directory to store extracted code
-#' @export
-run_package_tests <- function (pkg, lib.loc = NULL, outDir, verbose = TRUE)
-{
-    info <- tools::getVignetteInfo(package = pkg)
-    vdir <- info[ ,2]
-    vfiles <- info[ ,6]
-    p <- file.path(vdir, "doc", vfiles)
-    if (verbose) cat(paste("Running vignettes (", length(vfiles), "files)\n"))
-    # vignettes are not expected to be runnable, silence errors
-    invisible( tryCatch( sapply(p, source), error = function(x) invisible() ) )
-    # run package examples
     package.dir <- find.package(pkg)
-    manPath <- file.path(package.dir, "man")
-    examples <- list.files(manPath, pattern = "\\.[Rr]d$", no.. = TRUE)
-    if (verbose) cat(paste("Running examples (", length(examples), "man files)\n"))
-    for (f in examples) {
-        code <- example_code(file.path(manPath, f))
-        tryCatch(eval(parse(text = code)), error = function(x) print(x))
+    exScripts <- list.files(file.path(package.dir, "R-ex"), pattern = ".+\\.[RSrs]", full.names = TRUE)
+    testScripts <- list.files(file.path(package.dir, "tests"), pattern = ".+\\.[RSrs]", full.names = TRUE)
+
+    pkg.output.dir <- file.path(output.dir, pkg)
+
+    if(dir.exists(pkg.output.dir)) {
+        unlink(pkg.output.dir, recursive = TRUE)
     }
-    # run tests
-    if (verbose) cat("Running package tests\n")
-    testthat::test_dir(file.path(package.dir, "tests", "testthat"), filter = NULL)
+    dir.create(pkg.output.dir)
+
+    for(script in c(exScripts, testScripts)) {
+        run_package_source(pkg, flist, script, pkg.output.dir)
+    }
+
+    validate_tests(file.path(pkg.output.dir, "captured"))
 }
 
-#' run_all_tests
-#' @description run all the test/example codes from all the selected packages
-#' @param outDir output dir
-#' @param errorsAreFatal should errors break the process
-#' @param scope how to prioritize/select packages to run
-#' @param srcdir source directory
-#' @param pkg_limit maximum number of packages to use for test generation
-#' @param custom_pkg_list custom list of packages of interest to use for test generation
-#' @export
-run_all_tests <-
-    function (outDir = ".", errorsAreFatal = FALSE,
-              scope = c("all", "base", "recommended", "top"),
-              srcdir = NULL, pkg_limit = NULL,
-              custom_pkg_list = NULL)
-{
-        ow <- options(warn = 1); on.exit(ow); scope <- match.arg(scope);
-        status <- 0L; pkgs <- character();
-        known_packages <- tools:::.get_standard_package_names()
-        all_avail_packages <- names(installed.packages()[ ,1])
-        avail_packages <- all_avail_packages[!is.element(all_avail_packages, c(known_packages$base, known_packages$recommended))]
-        pkgs <- c(character(0))
+#' Executes a script in an independent R session and stores the output in the
+#' package working directory.
+#'
+#' @param pkg the name of the package (must be installed)
+#' @param source.file the full path of the source file to execute
+#' @param flist list of functions to intrument
+#' @param output.dir the output dir to write capture tests and output
+run_package_source <- function(pkg, flist, source, output.dir) {
 
-        if (scope %in% c("all", "base"))
-            pkgs <- known_packages$base
-        if (scope %in% c("all", "recommended"))
-            pkgs <- c(pkgs, known_packages$recommended)
-        if (scope %in% c("all"))
-            pkgs <- c(pkgs, avail_packages)
-        if (scope %in% c("top"))
-            pkgs <- c(
-                do.call(
-                    find_packages_using_function,
-                    list(functionName = testEnv$fname, limit = testEnv$pkg_limit),
-                    envir = testEnv),
-                pkgs)
-        if (!is.na(custom_pkg_list)) {
-            pkgs <- c( custom_pkg_list[ is.element(custom_pkg_list,
-                                                   all_avail_packages) ], pkgs )
-        }
-        if (pkg_limit > 0)
-            pkgs <- pkgs[ 1:pkg_limit ]
-        pkgs <- pkgs[ !duplicated(pkgs) ]
-        # Sometimes last value is NA
-        pkgs <- pkgs[!is.na(pkgs)]
-        pkgs <- pkgs[!pkgs == "NA"]
 
-        if (scope %in% c("top") && length(pkgs) < pkg_limit ) {
-            pkgs <- c(known_packages$base, known_packages$recommended,
-                      avail_packages)
-            pkgs <- pkgs[ !duplicated(pkgs) ]
-            pkgs <- pkgs[1:pkg_limit]
-        }
-        if(length(pkgs)) {
-            print("Selected packages:")
-            print(pkgs)
-            for (pkg in pkgs) {
-                print(paste0("############ START PACKAGE: ", pkg, " #######"))
-                tryCatch(run_package_tests(pkg, .Library, outDir), error = function(e) print(e) )
-                print(paste0("############ DONE WITH PACKAGE: ", pkg, " #######"))
-            }
-        } else {
-            print("No packages were selected for example/test code extraction")
-        }
-        invisible(status)
+    cat(sprintf("  Running %s... ", basename(source)))
+
+    script <- c(
+        "library(testr)",
+        sprintf("library(%s)", pkg),
+        sprintf("setwd('%s')", dirname(source)),
+        sprintf("start_capture(%s)", deparse(flist)),
+        sprintf("source('%s', echo = TRUE)", basename(source)),
+        sprintf("generate('%s')", file.path(output.dir, "captured"))
+    )
+
+    harnessScript <- file.path(output.dir, basename(source))
+    writeLines(script, harnessScript)
+
+    scriptOutput = paste(harnessScript, "out", sep=".")
+    errorCode <- system2(command = "Rscript", args = c(harnessScript), stdout = scriptOutput, stderr = scriptOutput)
+
+    if(errorCode == 0) {
+        cat("OK\n")
+    } else {
+        cat(sprintf("FAILED: Exited with %d\n", errorCode))
     }
+}
+
+#' Attempts to run all generated tests to verify that they're actually correct.
+#'
+#'
+validate_tests <- function(capture.dir) {
+
+    cat(sprintf("  Validating tests... ", pkg))
+
+    test.files <- list.files("R6/captured/base___gsub/", pattern=".+\\.R", full.names = TRUE)
+
+    ok <- sapply(test.files, function(test.file) {
+
+        test.output <- paste0(test.file, ".out")
+        exitCode <- system2("Rscript", args = test.file, stdout = test.output, stderr = test.output)
+        if(exitCode != 0) {
+            file.rename(test.file, paste0(test.file, ".bad"))
+        }
+        exitCode == 0
+    })
+
+    cat(sprintf("%d/%d OK\n", sum(ok), length(test.files)))
+}
+
+
 
 #' get_tests
 #' @description get the names of all generated test cases
@@ -173,44 +101,29 @@ get_tests <- function(capt_dir)
 }
 
 #' generate_test_cases
-#' @description generates test cases based on environmental variables
+#'
+#' Systematically generates test cases for a given base function by running as many package
+#' examples and tests as possible to capture inputs and outputs of functions.
+#'
+#' If the functions argument is missing, then the list of functions is read from the
+#' environment variable FUNCTIONS
+#'
+#' @description generates test cases of base functions using package sources
 #' @import devtools methods
 #' @export
-generate_test_cases <- function()
+generate_test_cases <- function(functions)
 {
-    set_function_name(Sys.getenv("function_name"))
-    set_pkg_name(Sys.getenv("package_name"))
-    set_job(Sys.getenv("JOB_NAME"))
-    set_build(Sys.getenv("BUILD_NUMBER"))
-    set_pkg_limit(Sys.getenv("pkg_limit"))
-    set_scope(Sys.getenv("scope"))
-    set_root(getwd())
-    if (as.logical(Sys.getenv("install_testr"))) {
-        if(!require(devtools)){
-            install.packages("devtools", dependencies = TRUE,
-                             repos = "http://cloud.r-project.org/")
-            library(devtools)
+    # Read from environment if not explicitly provided
+    if(missing(functions)) {
+        functions <- strsplit(Sys.getenv("FUNCTIONS"), split="\\s*,\\s*")[[1]]
+        if(length(functions) == 0) {
+            stop("No functions provided. Set the FUNCTIONS environment variable with a comma-delimited list of functions")
         }
-        install_git("https://github.com/psolaimani/testr.git", branch = "master",
-                    upgrade_dependencies = FALSE)
-        install_git("https://github.com/bedatadriven/hamcrest.git",
-                    branch = "master", upgrade_dependencies = FALSE)
     }
-    set_test_out_dir(paste0(testEnv$root, "/", testEnv$job, "_", testEnv$build))
-    dir.create(testEnv$testOutDir, recursive = TRUE)
-    start_capture( paste(testEnv$pkg_name, "::", testEnv$fname, sep = ""),
-                   verbose = TRUE )
-    run_all_tests(
-        outDir = testEnv$testOutDir, scope = testEnv$scope,
-        pkg_limit =  as.numeric(testEnv$pkg_limit),
-        custom_pkg_list = testEnv$custom_pkg_list
-    )
-    setwd(testEnv$root)
-    stop_capture_all()
-    generate("capture")
-    set_capt_dir(file.path(testEnv$root,"capture"))
-    set_arch_dir(file.path(testEnv$root,"tests"))
-    set_test_dir(file.path(testEnv$root,"capture",paste0(testEnv$pkg_name,"___",
-                                                       testEnv$fname)))
-    write_captured_tests("tests")
+
+    packages <- installed.packages()[, 1]
+
+    for(pkg in packages) {
+        run_package(pkg, functions)
+    }
 }
