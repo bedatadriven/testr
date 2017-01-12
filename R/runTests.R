@@ -44,7 +44,7 @@ run_package_source <- function(pkg, flist, source, output.dir) {
         "library(testr)",
         sprintf("library(%s)", pkg),
         sprintf("setwd('%s')", dirname(source)),
-        sprintf("start_capture(%s)", deparse(flist)),
+        sprintf("start_capture(%s)", paste(deparse(flist), collapse="")),
         sprintf("source('%s', echo = TRUE)", basename(source)),
         sprintf("generate('%s')", file.path(output.dir, "captured"))
     )
