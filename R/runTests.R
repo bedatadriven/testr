@@ -69,7 +69,7 @@ validate_tests <- function(capture.dir) {
 
     cat(sprintf("  Validating tests... "))
 
-    test.files <- list.files(capture.dir, pattern=".+\\.R", full.names = TRUE)
+    test.files <- list.files(capture.dir, pattern=".+\\.R", full.names = TRUE, recursive = TRUE)
 
     ok <- vapply(test.files, FUN.VALUE = logical(1), function(test.file) {
 
