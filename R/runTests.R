@@ -11,8 +11,8 @@ run_package <- function(pkg, flist, output.dir = getwd()) {
     cat(sprintf("Package %s:\n", pkg))
 
     package.dir <- find.package(pkg)
-    exScripts <- list.files(file.path(package.dir, "R-ex"), pattern = ".+\\.[RSrs]", full.names = TRUE)
-    testScripts <- list.files(file.path(package.dir, "tests"), pattern = ".+\\.[RSrs]", full.names = TRUE)
+    exScripts <- list.files(file.path(package.dir, "R-ex"), pattern = ".+\\.[RSrs]$", full.names = TRUE)
+    testScripts <- list.files(file.path(package.dir, "tests"), pattern = ".+\\.[RSrs]$", full.names = TRUE)
 
     pkg.output.dir <- file.path(output.dir, pkg)
 
