@@ -56,9 +56,9 @@ run_package_source <- function(pkg, flist, source, output.dir) {
     errorCode <- system2(command = "Rscript", args = c(harnessScript), stdout = scriptOutput, stderr = scriptOutput)
 
     if(errorCode == 0) {
-        cat("OK\n")
+        cat("\n")
     } else {
-        cat(sprintf("FAILED: Exited with %d\n", errorCode))
+        cat(sprintf("ERROR(%d)\n", errorCode))
     }
 }
 
