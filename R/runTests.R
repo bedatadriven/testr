@@ -115,11 +115,14 @@ generate_test_cases <- function(functions)
 {
     # Read from environment if not explicitly provided
     if(missing(functions)) {
-        functions <- strsplit(Sys.getenv("FUNCTIONS"), split="\\s*,\\s*")[[1]]
+        functions <- strsplit(Sys.getenv("FUNCTIONS"), split="[\\s,]]+")[[1]]
+        functions <- functions[ nzchar(functions) > 0 ]
         if(length(functions) == 0) {
             stop("No functions provided. Set the FUNCTIONS environment variable with a comma-delimited list of functions")
         }
     }
+
+    cat(sprintf("function: %s\n", functions))
 
     packages <- installed.packages()[, 1]
 
