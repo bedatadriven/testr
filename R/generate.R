@@ -243,7 +243,7 @@ write_captured_tests <- function(path)
         set_root(getwd())
     set_capt_dir(file.path(testEnv$root,"capture"))
 
-    tc <- remove_failing_tcs()
+    #tc <- remove_failing_tcs()
     dirs <- list.dirs(testEnv$capt_dir, recursive = FALSE)
 
     if (length(grep("___", dirs))) {
