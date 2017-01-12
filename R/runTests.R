@@ -67,21 +67,27 @@ run_package_source <- function(pkg, flist, source, output.dir) {
 #'
 validate_tests <- function(capture.dir) {
 
-    cat(sprintf("  Validating tests... "))
+    cat(sprintf("  Validating tests...\n"))
 
     test.files <- list.files(capture.dir, pattern=".+\\.R", full.names = TRUE, recursive = TRUE)
 
-    ok <- vapply(test.files, FUN.VALUE = logical(1), function(test.file) {
-
+    ok <- 0
+    total <- 0
+    for(test.file in test.files) {
         test.output <- paste0(test.file, ".out")
         exitCode <- system2("Rscript", args = test.file, stdout = test.output, stderr = test.output)
         if(exitCode != 0) {
             file.rename(test.file, paste0(test.file, ".bad"))
+        } else {
+            ok <- ok + 1
         }
-        exitCode == 0
-    })
+        total <- total + 1
+        if(total %% 500 == 0) {
+            cat(sprintf("  Validated %d tests so far...\n", total))
+        }
+    }
 
-    cat(sprintf("%d/%d OK\n", sum(ok), length(test.files)))
+    cat(sprintf("  Validated %d/%d tests.\n", ok, length(test.files)))
 }
 
 
