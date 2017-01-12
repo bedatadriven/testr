@@ -69,9 +69,9 @@ validate_tests <- function(capture.dir) {
 
     cat(sprintf("  Validating tests... "))
 
-    test.files <- list.files("R6/captured/base___gsub/", pattern=".+\\.R", full.names = TRUE)
+    test.files <- list.files(capture.dir, pattern=".+\\.R", full.names = TRUE)
 
-    ok <- sapply(test.files, function(test.file) {
+    ok <- vapply(test.files, FUN.VALUE = logical(1), function(test.file) {
 
         test.output <- paste0(test.file, ".out")
         exitCode <- system2("Rscript", args = test.file, stdout = test.output, stderr = test.output)
