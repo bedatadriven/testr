@@ -10,23 +10,60 @@ run_package <- function(pkg, flist, output.dir = getwd()) {
 
     cat(sprintf("Package %s:\n", pkg))
 
-    package.dir <- find.package(pkg)
-    exScripts <- list.files(file.path(package.dir, "R-ex"), pattern = ".+\\.[RSrs]$", full.names = TRUE)
-    testScripts <- list.files(file.path(package.dir, "tests"), pattern = ".+\\.[RSrs]$", full.names = TRUE)
-
+    # Create a folder for test output, deleting it
+    # if it already exists
     pkg.output.dir <- file.path(output.dir, pkg)
-
     if(dir.exists(pkg.output.dir)) {
         unlink(pkg.output.dir, recursive = TRUE)
     }
     dir.create(pkg.output.dir)
 
-    for(script in c(exScripts, testScripts)) {
+    # Run package examples
+    run_package_examples(pkg, flist, pkg.output.dir)
+
+    # Run test scripts
+    package.dir <- find.package(pkg)
+    testScripts <- list.files(file.path(package.dir, "tests"), pattern = ".+\\.[RSrs]$", full.names = TRUE)
+
+    for(script in testScripts) {
         run_package_source(pkg, flist, script, pkg.output.dir)
     }
 
     validate_tests(file.path(pkg.output.dir, "captured"))
 }
+
+#' Executes a script in an independent R session and stores the output in the
+#' package working directory.
+#'
+#' @param pkg the name of the package (must be installed)
+#' @param source.file the full path of the source file to execute
+#' @param flist list of functions to intrument
+#' @param output.dir the output dir to write capture tests and output
+run_package_examples <- function(pkg, flist, output.dir) {
+
+    cat(sprintf("  Running Examples... "))
+
+    script <- c(
+        "library(testr)",
+        sprintf("library(%s)", pkg),
+        sprintf("start_capture(%s)", paste(deparse(flist), collapse="")),
+        sprintf("example(%s)", pkg),
+        sprintf("generate('%s')", file.path(output.dir, "captured"))
+    )
+
+    harnessScript <- file.path(output.dir, "examples.R")
+    writeLines(script, harnessScript)
+
+    scriptOutput = paste(harnessScript, "out", sep=".")
+    errorCode <- system2(command = "timeout", args = c("30s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
+
+    if(errorCode == 0) {
+        cat("\n")
+    } else {
+        cat(sprintf("ERROR(%d)\n", errorCode))
+    }
+}
+
 
 #' Executes a script in an independent R session and stores the output in the
 #' package working directory.
@@ -53,7 +90,7 @@ run_package_source <- function(pkg, flist, source, output.dir) {
     writeLines(script, harnessScript)
 
     scriptOutput = paste(harnessScript, "out", sep=".")
-    errorCode <- system2(command = "Rscript", args = c(harnessScript), stdout = scriptOutput, stderr = scriptOutput)
+    errorCode <- system2(command = "timeout", args = c("30s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
 
     if(errorCode == 0) {
         cat("\n")
