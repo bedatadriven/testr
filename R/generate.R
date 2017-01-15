@@ -156,6 +156,13 @@ read_value <- function(lines, prefix)
 #' @seealso test_gen ProcessClosure
 generate_tc <- function(symb, vsym, func, argv)
 {
+  # Fixup specials
+  if(func == "base::[") {
+      func <- "`[`"
+  } else if(func == "base::[[") {
+      func <- "`[[`"
+  }
+
   # check validity of symbol values and construct part of the test
   invalid.symbols <- vector()
   variables <- ""
