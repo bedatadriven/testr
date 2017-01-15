@@ -55,7 +55,7 @@ run_package_examples <- function(pkg, flist, output.dir) {
     writeLines(script, harnessScript)
 
     scriptOutput = paste(harnessScript, "out", sep=".")
-    errorCode <- system2(command = "timeout", args = c("30s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
+    errorCode <- system2(command = "timeout", args = c("45s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
 
     if(errorCode == 0) {
         cat("\n")
@@ -90,7 +90,7 @@ run_package_source <- function(pkg, flist, source, output.dir) {
     writeLines(script, harnessScript)
 
     scriptOutput = paste(harnessScript, "out", sep=".")
-    errorCode <- system2(command = "timeout", args = c("30s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
+    errorCode <- system2(command = "timeout", args = c("90s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
 
     if(errorCode == 0) {
         cat("\n")
