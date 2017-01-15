@@ -6,17 +6,17 @@
 #' @param pkg the name of the package (must be installed)
 #' @param flist list of functions to instrument for capture
 #' @param output.dir directory to write all harnes scripts, tests, and generated content.
-run_package <- function(pkg, flist, output.dir = getwd()) {
+run_package <- function(pkg, flist, output.dir = getwd(), validation.cache = new.env()) {
 
     cat(sprintf("Package %s:\n", pkg))
 
     # Create a folder for test output, deleting it
     # if it already exists
-    pkg.output.dir <- file.path(output.dir, pkg)
+    pkg.output.dir <- file.path(output.dir, "packages", pkg)
     if(dir.exists(pkg.output.dir)) {
         unlink(pkg.output.dir, recursive = TRUE)
     }
-    dir.create(pkg.output.dir)
+    dir.create(pkg.output.dir, recursive = TRUE)
 
     # Run package examples
     run_package_examples(pkg, flist, pkg.output.dir)
@@ -29,7 +29,9 @@ run_package <- function(pkg, flist, output.dir = getwd()) {
         run_package_source(pkg, flist, script, pkg.output.dir)
     }
 
-    validate_tests(file.path(pkg.output.dir, "captured"))
+    validate_tests(capture.dir = file.path(pkg.output.dir, "captured"),
+                   validated.test.dir = file.path(output.dir, "validated"),
+                   cache = validation.cache)
 }
 
 #' Executes a script in an independent R session and stores the output in the
@@ -39,7 +41,7 @@ run_package <- function(pkg, flist, output.dir = getwd()) {
 #' @param source.file the full path of the source file to execute
 #' @param flist list of functions to intrument
 #' @param output.dir the output dir to write capture tests and output
-run_package_examples <- function(pkg, flist, output.dir) {
+run_package_examples <- function(pkg, flist, output.dir, validation.cache) {
 
     cat(sprintf("  Running Examples... "))
 
@@ -55,7 +57,9 @@ run_package_examples <- function(pkg, flist, output.dir) {
     writeLines(script, harnessScript)
 
     scriptOutput = paste(harnessScript, "out", sep=".")
-    errorCode <- system2(command = "timeout", args = c("45s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
+    errorCode <- system2(command = "timeout", args = c("45s", "Rscript", harnessScript),
+                         stdout = scriptOutput,
+                         stderr = scriptOutput)
 
     if(errorCode == 0) {
         cat("\n")
@@ -102,29 +106,43 @@ run_package_source <- function(pkg, flist, source, output.dir) {
 #' Attempts to run all generated tests to verify that they're actually correct.
 #'
 #'
-validate_tests <- function(capture.dir) {
+validate_tests <- function(capture.dir, validated.test.dir, cache = new.env()) {
 
     cat(sprintf("  Validating tests...\n"))
 
     test.files <- list.files(capture.dir, pattern=".+\\.R", full.names = TRUE, recursive = TRUE)
 
+    # Create the validated test dir if doesn't exist
+    if(!dir.exists(validated.test.dir)) {
+        dir.create(validated.test.dir)
+    }
+
     ok <- 0
     total <- 0
+    cacheHits <- 0
     for(test.file in test.files) {
-        test.output <- paste0(test.file, ".out")
-        exitCode <- system2("Rscript", args = test.file, stdout = test.output, stderr = test.output)
-        if(exitCode != 0) {
-            file.rename(test.file, paste0(test.file, ".bad"))
+        cacheKey <- basename(test.file)
+        cached <- cache[[cacheKey]]
+        if(!is.null(cached)) {
+            cacheHits <- cacheHits + 1
         } else {
-            ok <- ok + 1
-        }
-        total <- total + 1
-        if(total %% 500 == 0) {
-            cat(sprintf("  Validated %d tests so far...\n", total))
+            test.output <- paste0(test.file, ".out")
+            exitCode <- system2("Rscript", args = test.file, stdout = test.output, stderr = test.output)
+            if(exitCode != 0) {
+                cache[[cacheKey]] <- FALSE
+            } else {
+                cache[[cacheKey]] <- TRUE
+                file.copy(test.file, file.path(validated.test.dir, basename(test.file)))
+                ok <- ok + 1
+            }
+            total <- total + 1
+            if(total %% 500 == 0) {
+                cat(sprintf("  Validated %d tests so far...\n", total))
+            }
         }
     }
 
-    cat(sprintf("  Validated %d/%d tests.\n", ok, length(test.files)))
+    cat(sprintf("  Validated %d/%d new tests, %d cached.\n", ok, (length(test.files)-cacheHits), cacheHits))
 }
 
 
@@ -169,7 +187,10 @@ generate_test_cases <- function(functions)
 
     packages <- installed.packages()[, 1]
 
+    # Set up validation cache and output dir
+    validation.cache <- new.env(hash = TRUE)
+
     for(pkg in packages) {
-        run_package(pkg, functions)
+        run_package(pkg, functions, validation.cache = validation.cache)
     }
 }
