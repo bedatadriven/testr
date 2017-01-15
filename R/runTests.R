@@ -48,6 +48,8 @@ run_package_examples <- function(pkg, flist, output.dir, validation.cache) {
     script <- c(
         "library(testr)",
         sprintf("library(%s)", pkg),
+        sprintf("setwd('%s')", output.dir),
+        sprintf("testr_options('capture.folder', '%s')", file.path(output.dir, "example_capture")),
         sprintf("start_capture(%s)", paste(deparse(flist), collapse="")),
         sprintf("example(%s)", pkg),
         sprintf("generate('%s')", file.path(output.dir, "captured"))
@@ -85,6 +87,7 @@ run_package_source <- function(pkg, flist, source, output.dir) {
         "library(testr)",
         sprintf("library(%s)", pkg),
         sprintf("setwd('%s')", dirname(source)),
+        sprintf("testr_options('capture.folder', '%s')", file.path(output.dir, "test_capture")),
         sprintf("start_capture(%s)", paste(deparse(flist), collapse="")),
         sprintf("source('%s', echo = TRUE)", basename(source)),
         sprintf("generate('%s')", file.path(output.dir, "captured"))
