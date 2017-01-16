@@ -127,12 +127,20 @@ validate_tests <- function(capture.dir, validated.test.dir, cache = new.env()) {
         if(!is.null(cached)) {
             cacheHits <- cacheHits + 1
         } else {
-            test.output <- paste0(test.file, ".out")
-            exitCode <- system2("Rscript", args = test.file, stdout = test.output, stderr = test.output)
-            if(exitCode != 0) {
-                cache[[cacheKey]] <- FALSE
+
+            if(file.size(test.file) > (1024 * 10)) {
+                valid <- FALSE
             } else {
-                cache[[cacheKey]] <- TRUE
+                test.output <- paste0(test.file, ".out")
+                exitCode <- system2("timeout", args = c("2s", "Rscript", test.file),
+                                    stdout = test.output,
+                                    stderr = test.output)
+
+                valid <- (exitCode == 0)
+            }
+            cache[[cacheKey]] <- valid
+
+            if(valid) {
                 file.copy(test.file, file.path(validated.test.dir, basename(test.file)))
                 ok <- ok + 1
             }
