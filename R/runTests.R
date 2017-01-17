@@ -58,9 +58,7 @@ run_package_examples <- function(pkg, flist, output.dir, validation.cache) {
     writeLines(script, harnessScript)
 
     scriptOutput = paste(harnessScript, "out", sep=".")
-    errorCode <- system2(command = "timeout", args = c("45s", "Rscript", harnessScript),
-                         stdout = scriptOutput,
-                         stderr = scriptOutput)
+    errorCode <- run_script_with_timeout(harnessScript, scriptOutput)
 
     if(errorCode == 0) {
         cat("\n")
@@ -95,13 +93,24 @@ run_package_source <- function(pkg, flist, source, output.dir) {
     writeLines(script, harnessScript)
 
     scriptOutput = paste(harnessScript, "out", sep=".")
-    errorCode <- system2(command = "timeout", args = c("90s", "Rscript", harnessScript), stdout = scriptOutput, stderr = scriptOutput)
+    errorCode <- run_script_with_timeout(harnessScript, scriptOutput)
 
     if(errorCode == 0) {
         cat("\n")
     } else {
         cat(sprintf("ERROR(%d)\n", errorCode))
     }
+}
+
+#' Spawns a new VM to run the given script and write the output to the given file.
+#'
+#' If the script does not complete within 90 seconds, it is sent the the TERM signal.
+#' If the process does not exit within 5 seconds, it is sent the KILL signal.
+run_script_with_timeout <- function(script.file, output.file) {
+    system2(command = "timeout",
+            args = c("--kill-after=5s", "90s", "Rscript", script.file),
+            stdout = output.file,
+            stderr = output.file)
 }
 
 #' Attempts to run all generated tests to verify that they're actually correct.
