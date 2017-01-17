@@ -140,7 +140,7 @@ validate_tests <- function(capture.dir, validated.test.dir, cache = new.env()) {
             cacheHits <- cacheHits + 1
         } else {
 
-            if(file.size(test.file) > (1024 * 10)) {
+            if(file.size(test.file) > (1024 * 20)) {
                 valid <- FALSE
             } else {
                 test.output <- paste0(test.file, ".out")
