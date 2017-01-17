@@ -6,7 +6,7 @@
 #' @param pkg the name of the package (must be installed)
 #' @param flist list of functions to instrument for capture
 #' @param output.dir directory to write all harnes scripts, tests, and generated content.
-run_package <- function(pkg, flist, output.dir = getwd(), validation.cache = new.env()) {
+run_package <- function(pkg, flist, output.dir = getwd(), validation.cache = new.env(), skip.existing = TRUE) {
 
     cat(sprintf("Package %s:\n", pkg))
 
@@ -14,7 +14,12 @@ run_package <- function(pkg, flist, output.dir = getwd(), validation.cache = new
     # if it already exists
     pkg.output.dir <- file.path(output.dir, "packages", pkg)
     if(dir.exists(pkg.output.dir)) {
-        unlink(pkg.output.dir, recursive = TRUE)
+        if(skip.existing) {
+            cat(sprintf("  Already done, skipping.\n"))
+            return(NULL)
+        } else {
+            unlink(pkg.output.dir, recursive = TRUE)
+        }
     }
     dir.create(pkg.output.dir, recursive = TRUE)
 
@@ -76,8 +81,6 @@ run_package_examples <- function(pkg, flist, output.dir, validation.cache) {
 #' @param flist list of functions to intrument
 #' @param output.dir the output dir to write capture tests and output
 run_package_source <- function(pkg, flist, source, output.dir) {
-
-
     cat(sprintf("  Running %s... ", basename(source)))
 
     script <- c(
