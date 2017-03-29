@@ -191,11 +191,12 @@ generate_tc <- function(symb, vsym, func, argv)
   # TODO: potentially good arguments, alter it
   #  argv.obj.lst <- alter.arguments(argv.obj);
 
+  deparsec <-  c("hexNumeric", "showAttributes", "keepInteger")
   call <- ""
 
   args <- eval(parse(text=argv));
   if (length(args) > 0) {
-    args <- lapply(args, function(x) paste(deparse(x), collapse = "\n"))
+    args <- lapply(args, function(x) paste(deparse(x, control = deparsec), collapse = "\n"))
     if (!is.null(names(args)) && length(names(args)) == length(args)) {
       call.args <- ""
       arg_names <- names(args)
@@ -230,7 +231,7 @@ generate_tc <- function(symb, vsym, func, argv)
     # testhat formatter
     src <- ""
     if (is.null(cache$errs) && is.null(cache$warns)) {
-        src <- paste(src, "expected <-", paste(deparse(retv, control = c("hexNumeric", "showAttributes", "keepInteger")), collapse = "\n"), "\n")
+        src <- paste(src, "expected <-", paste(deparse(retv, control = deparsec), collapse = "\n"), "\n")
         call <- paste("\n\nassertThat(", call, ",  identicalTo( expected, tol = 1e-6 ) )", sep = "")
     }
 
