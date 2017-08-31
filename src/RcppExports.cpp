@@ -17,3 +17,13 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"testr_WriteCapInfo_cpp", (DL_FUNC) &testr_WriteCapInfo_cpp, 2},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_testr(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}

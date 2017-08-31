@@ -12,4 +12,3 @@ write_captured_tests(path)
 \description{
 creates an archive of generated test cases
 }
-

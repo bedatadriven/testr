@@ -4,9 +4,8 @@
 \alias{validate_tests}
 \title{Attempts to run all generated tests to verify that they're actually correct.}
 \usage{
-validate_tests(capture.dir)
+validate_tests(capture.dir, validated.test.dir, cache = new.env())
 }
 \description{
 Attempts to run all generated tests to verify that they're actually correct.
 }
-

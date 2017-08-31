@@ -12,4 +12,3 @@ get_tests(capt_dir)
 \description{
 get the names of all generated test cases
 }
-

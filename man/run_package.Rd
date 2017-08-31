@@ -5,7 +5,8 @@
 \title{Runs all available source code from a package in order to generate
 usable tests.}
 \usage{
-run_package(pkg, flist, output.dir = getwd())
+run_package(pkg, flist, output.dir = getwd(), validation.cache = new.env(),
+  skip.existing = TRUE)
 }
 \arguments{
 \item{pkg}{the name of the package (must be installed)}
@@ -18,4 +19,3 @@ run_package(pkg, flist, output.dir = getwd())
 Runs all available source code from a package in order to generate
 usable tests.
 }
-

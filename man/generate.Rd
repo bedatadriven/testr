@@ -22,4 +22,3 @@ generate(output_dir, root = testr_options("capture.folder"), timed = FALSE,
 This function takes the tracing information collected by capture and generates
 testthat compatible testcases.
 }
-

@@ -4,13 +4,24 @@
 \alias{generate_test_cases}
 \title{generate_test_cases}
 \usage{
-generate_test_cases(functions)
+generate_test_cases(functions, limit)
+}
+\arguments{
+\item{functions}{Comma delimited names of functions to be decorated for test generation.
+Provided as string vector or through environment variable FUNCTIONS.}
+
+\item{limit}{max number of packages to be runned for test case generation. Provided as 
+integer or through environment variable MAX_PACKAGES_TO_RUN.}
 }
 \description{
-generates test cases based on environmental variables
+generates test cases of base functions using package sources
 }
 \details{
 Systematically generates test cases for a given base function by running as many package
-examples and tests as possible to capture inputs and outputs of functions.
-}
+examples and tests as possible to capture inputs and outputs of functions. Or limited 
+number of packages are used, if a 'limit' argument or 'MAX_PACKAGES_TO_RUN' environment 
+variable is provided,
 
+If the functions argument is missing, then the list of functions is read from the
+environment variable FUNCTIONS
+}
