@@ -185,7 +185,9 @@ get_tests <- function(capt_dir)
 #' generate_test_cases
 #'
 #' Systematically generates test cases for a given base function by running as many package
-#' examples and tests as possible to capture inputs and outputs of functions.
+#' examples and tests as possible to capture inputs and outputs of functions. Or limited 
+#' number of packages are used, if a 'limit' argument or 'MAX_PACKAGES_TO_RUN' environment 
+#' variable is provided, 
 #'
 #' If the functions argument is missing, then the list of functions is read from the
 #' environment variable FUNCTIONS
@@ -230,3 +232,40 @@ generate_test_cases <- function(functions, limit)
         run_package(pkg, functions, validation.cache = validation.cache)
     }
 }
+
+#' generate_test_cases_using
+#' 
+#' @description Generates test cases using the provided packages
+#' @import devtools methods
+#' @param functions list of functions to annotate for test case generation
+#' @param packages list of packages to be used for test case generation
+#' @export
+generate_test_cases_using <- function(functions, packages)
+{
+    # Read from environment if not explicitly provided
+    if(missing(functions)) {
+        functions <- strsplit(Sys.getenv("FUNCTIONS"), split="[\\s,]+", perl = TRUE)[[1]]
+        functions <- functions[ nzchar(functions) > 0 ]
+        if(length(functions) == 0) {
+            stop("No functions provided. Set the FUNCTIONS environment variable with a comma-delimited list of functions")
+        }
+    }
+    if(missing(packages)) {
+        packages <- strsplit(Sys.getenv("USE_PACKAGES"), split="[\\s,]+", perl = TRUE)[[1]]
+        packages <- packages[ nzchar(limit) > 0 ]
+        if(length(packages) == 0) {
+            stop("No packages provided. Set the USE_PACKAGES environment variable with a comma-delimited list of package names")
+        }
+    }
+
+    cat(sprintf("function(s): %s\n", functions))
+    cat(sprintf("packages(s): %s\n", limit))
+
+    # Set up validation cache and output dir
+    validation.cache <- new.env(hash = TRUE)
+
+    for(pkg in packages) {
+        run_package(pkg, functions, validation.cache = validation.cache)
+    }
+}
+
