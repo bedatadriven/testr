@@ -192,8 +192,12 @@ get_tests <- function(capt_dir)
 #'
 #' @description generates test cases of base functions using package sources
 #' @import devtools methods
+#' @param functions Comma delimited names of functions to be decorated for test generation.
+#' Provided as string vector or through environment variable FUNCTIONS.
+#' @param limit max number of packages to be runned for test case generation. Provided as 
+#' integer or through environment variable MAX_PACKAGES_TO_RUN. 
 #' @export
-generate_test_cases <- function(functions)
+generate_test_cases <- function(functions, limit)
 {
     # Read from environment if not explicitly provided
     if(missing(functions)) {
@@ -203,10 +207,21 @@ generate_test_cases <- function(functions)
             stop("No functions provided. Set the FUNCTIONS environment variable with a comma-delimited list of functions")
         }
     }
+    if(missing(limit)) {
+        limit <- strsplit(Sys.getenv("MAX_PACKAGES_TO_RUN"), split="[\\s,]+", perl = TRUE)[[1]]
+        limit <- limit[ nzchar(limit) > 0 ]
+        if(length(limit) == 0) {
+            limit = 0
+        } else {
+            limit = as.integer(limit[1])
+        }
+    }
 
     cat(sprintf("function: %s\n", functions))
+    if(limit) cat(sprintf("Number of packages to use: %s\n", limit))
 
     packages <- installed.packages()[, 1]
+    if(limit) packages <- packages[1:limit]
 
     # Set up validation cache and output dir
     validation.cache <- new.env(hash = TRUE)
