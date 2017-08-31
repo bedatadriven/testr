@@ -252,14 +252,14 @@ generate_test_cases_using <- function(functions, packages)
     }
     if(missing(packages)) {
         packages <- strsplit(Sys.getenv("USE_PACKAGES"), split="[\\s,]+", perl = TRUE)[[1]]
-        packages <- packages[ nzchar(limit) > 0 ]
+        packages <- packages[ nzchar(packages) > 0 ]
         if(length(packages) == 0) {
             stop("No packages provided. Set the USE_PACKAGES environment variable with a comma-delimited list of package names")
         }
     }
 
     cat(sprintf("function(s): %s\n", functions))
-    cat(sprintf("packages(s): %s\n", limit))
+    cat(sprintf("packages(s): %s\n", packages))
 
     # Set up validation cache and output dir
     validation.cache <- new.env(hash = TRUE)
